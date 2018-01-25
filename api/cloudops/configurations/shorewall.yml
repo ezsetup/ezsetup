@@ -1,0 +1,56 @@
+#cloud-config
+package_update: true
+packages:
+        - shorewall
+
+write_files:
+        - content: |
+                #ZONE    INTERFACE      BROADCAST       OPTIONS
+                {% for i in range(interfaces_count) -%}
+                        zone{{i+3}} ens{{i+3}}
+                {% endfor %}
+                #LAST LINE
+          path: /etc/shorewall/interfaces
+
+        - content: |
+                #ZONE   TYPE
+                fw      firewall
+                {% for i in range(interfaces_count) -%}
+                        zone{{i+3}}     ipv4
+                {% endfor %}
+                #LAST LINE
+          path: /etc/shorewall/zones
+
+        - content: |
+                #SOURCE         DEST    POLICY
+                {% for i in range(interfaces_count) -%}
+                fw      zone{{i+3}}     ACCEPT
+                zone{{i+3}}     fw              ACCEPT
+                        {% for j in range(interfaces_count) -%}
+                                {%- if i != j -%}
+  zone{{i+3}}     zone{{j+3}}     ACCEPT
+                                {% endif %}
+                        {%- endfor -%}
+                {%- endfor -%}
+                
+                all     all     REJECT
+                #LAST LINE
+          path: /etc/shorewall/policy
+
+        - content: |
+                auto lo
+                iface lo inet loopback
+
+                {% for i in range(interfaces_count) -%}
+                        auto ens{{i+3}}
+                        iface ens{{i+3}} inet dhcp
+                {% endfor %}
+          path: /etc/network/interfaces
+
+runcmd:
+        - ifdown -a && ifup -a
+        - echo "set /etc/shorewall/shorewall.conf and /etc/default/shorewall"
+        - sed -i '/IP_FORWARDING/c\IP_FORWARDING=On' /etc/shorewall/shorewall.conf
+        - sed -i '/startup=/c\startup=1' /etc/default/shorewall
+        - shorewall check
+        - shorewall restart

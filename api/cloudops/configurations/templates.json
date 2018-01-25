@@ -1,0 +1,20 @@
+[
+        {
+                "name": "Enable password authentication",
+                "path": "password-auth.yml"
+        },
+        {
+                "name": "shorewall",
+                "path": "shorewall.yml",
+                "hidden": true
+        },
+        {
+                "name": "noVNC",
+                "path": "novnc.yml"
+        },
+        {
+                "name": "staticroute",
+                "path": "staticroute.yml",
+                "hidden": true
+        }
+]

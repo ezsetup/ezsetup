@@ -1,0 +1,11 @@
+venv/
+.vscode/
+.idea/
+__pycache__/
+auth/__pycache__/
+*.pyc
+.cache/
+.env
+.swp
+.DS_Store
+.mypy_cache

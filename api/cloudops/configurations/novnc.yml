@@ -1,0 +1,71 @@
+#cloud-config
+package_update: true
+packages:
+        - python
+        - python-numpy # install numpy to accelerate noVNC according to noVNC team
+        - expect
+        - git
+        - vnc4server
+        - xfce4
+        - xfce4-terminal # xfce4-terminal has better user experience than xterm
+
+write_files:
+        - content: |
+                [Unit]
+                Description="noVNC service"
+                
+                [Service]
+                Type=simple
+                ExecStart=/var/lib/noVNC/utils/launch.sh --vnc localhost:5901
+          path: /etc/systemd/system/noVNC.service
+          permissions: '0655'
+
+        # runcmd module only runs during the first boot, so we need this script 
+        # to get vnc server and noVNC service started on every boot
+        - content: |
+                #!/bin/bash
+                su ubuntu -c "vncserver :1"
+                systemctl start noVNC
+          path: /var/lib/cloud/scripts/per-boot/00_start_vncserver
+          permissions: '0755'
+
+        # write_files module runs before users are created, and write files
+        # to user home folder will cause the ownership set to root. Write
+        # files to /tmp and later move them back to the home folder will
+        # save the effort of change the ownership of the whole home foler
+        # recursively, which may lead to some other issues.
+        - content: |
+                #!/bin/sh
+                prog=/usr/bin/vncpasswd
+                mypass="{{password}}"
+
+                /usr/bin/expect <<EOF
+                spawn "$prog"
+                expect "Password:"
+                send "$mypass\r"
+                expect "Verify:"
+                send "$mypass\r"
+                expect eof
+                exit
+                EOF
+          path: /tmp/.vnc/setvncpass.sh
+          permissions: '0755'
+
+        - content: |
+                #!/bin/sh
+                xrdb $HOME/.Xresources
+                startxfce4 &
+          path: /tmp/.vnc/xstartup
+          permissions: '0755'
+
+runcmd:
+        - git clone https://github.com/novnc/noVNC /var/lib/noVNC
+        # move vnc files back to the home folder and reset their ownership
+        - mv /tmp/.vnc /home/ubuntu/
+        - chown -R ubuntu:ubuntu /home/ubuntu/.vnc
+        # set password of the vnc server, also remove script afterwards to
+        # prevent password leakage
+        - su ubuntu -c "/bin/bash /home/ubuntu/.vnc/setvncpass.sh"
+        - rm -f /home/ubuntu/.vnc/setvncpass.sh
+        # start vnc server on first boot
+        - /var/lib/cloud/scripts/per-boot/00_start_vncserver

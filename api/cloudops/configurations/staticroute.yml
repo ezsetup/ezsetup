@@ -1,0 +1,14 @@
+- write_files:
+        - content: |
+                auto lo
+                iface lo inet loopback
+
+                auto ens3
+                iface ens3 inet dhcp
+                {% for net in nets %}
+                up route add -net {{net}} gw {{router_ip}}
+                {% endfor %}
+
+
+          path: /etc/network/interfaces
+

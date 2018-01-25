@@ -1,0 +1,68 @@
+#cloud-config
+chpasswd: {expire: false}
+package_update: true
+packages: [shorewall]
+password: password
+runcmd: [ifdown -a && ifup -a, echo "set /etc/shorewall/shorewall.conf and /etc/default/shorewall",
+  sed -i '/IP_FORWARDING/c\IP_FORWARDING=On' /etc/shorewall/shorewall.conf, sed -i
+    '/startup=/c\startup=1' /etc/default/shorewall, shorewall check, shorewall restart]
+ssh_pwauth: true
+write_files:
+- {content: '#ZONE    INTERFACE      BROADCAST       OPTIONS
+
+    zone3   ens3
+
+    zone4   ens4
+
+    #LAST LINE
+
+    ', path: /etc/shorewall/interfaces}
+- {content: '#ZONE   TYPE
+
+    fw      firewall
+
+    zone3   ipv4
+
+    zone4   ipv4
+
+    #LAST LINE
+
+    ', path: /etc/shorewall/zones}
+- {content: '#SOURCE         DEST    POLICY
+
+    fw      zone3   ACCEPT
+
+    fw      zone4   ACCEPT
+
+
+    zone3   fw      ACCEPT
+
+    zone3   zone4   ACCEPT
+
+
+    zone4   fw      ACCEPT
+
+    zone4   zone3   ACCEPT
+
+
+    all     all     REJECT
+
+    #LAST LINE
+
+    ', path: /etc/shorewall/policy}
+- {content: "ens3    ens4 \nens4    ens3 \n", path: /etc/shorewall/masq}
+- {content: 'auto lo
+
+    iface lo inet loopback
+
+
+    auto ens3
+
+    iface ens3 inet dhcp
+
+
+    auto ens4
+
+    iface ens4 inet dhcp
+
+    ', path: /etc/network/interfaces}
