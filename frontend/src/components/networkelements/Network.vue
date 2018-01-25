@@ -1,0 +1,92 @@
+<template>
+  <svg>
+    <defs>
+      <filter :id="`networkSofGlow${el.gid}`" height="300%" width="300%" x="-75%" y="-75%">
+        <!-- Thicken out the original shape -->
+        <feMorphology operator="dilate" radius="2" in="SourceAlpha" result="thicken" />
+  
+        <!-- Use a gaussian blur to create the soft blurriness of the glow -->
+        <feGaussianBlur in="thicken" stdDeviation="5" result="blurred" />
+  
+        <!-- Change the colour -->
+        <feFlood flood-color="rgb(64,224,208)" result="glowColor" />
+  
+        <!-- Color in the glows -->
+        <feComposite in="glowColor" in2="blurred" operator="in" result="softGlow_colored" />
+  
+        <!--	Layer the effects together -->
+        <feMerge>
+          <feMergeNode in="softGlow_colored" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+  
+      </filter>
+    </defs>
+    <text :x="el.x" :y="el.y-40" text-anchor="middle" font-size="14">{{el.name}}</text>
+    <svg :filter="filter" @click="onClick" @mouseout="onMouseOut" @mouseover="onMouseOver" height="120" width="120" :x="el.x-60" :y="el.y-60" viewBox="0 0 92 51" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:1.41421;">
+      <g id="Artboard1" transform="matrix(0.958333,0,0,0.927273,-1.91667,-19.4727)">
+        <rect x="2" y="21" width="96" height="55" style="fill:none;" />
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <ellipse cx="59.5" cy="56" rx="33.5" ry="16" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <circle cx="25" cy="57" r="9" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <ellipse cx="32.5" cy="44.5" rx="7.5" ry="6.5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <ellipse cx="54.5" cy="40" rx="15.5" ry="9" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.18117,-4.26087,-14.3335)">
+          <ellipse cx="19.5" cy="60.5" rx="9.5" ry="10.5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.14381,0,0,1.07843,-6.7893,-5.96078)">
+          <ellipse cx="33" cy="67" rx="13" ry="5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.43789,-2.17391,-23.9338)">
+          <ellipse cx="25.5" cy="45.5" rx="4.5" ry="4.5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.21739,0,0,1.07843,-9.47826,-5.96078)">
+          <ellipse cx="39" cy="37.5" rx="3" ry="5.5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.0984,0,0,1.25817,-4.20595,-12.4314)">
+          <ellipse cx="46.5" cy="33" rx="9.5" ry="3" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <ellipse cx="73" cy="40" rx="7" ry="6" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.60535,0,0,1.55773,-50.0936,-39.9913)">
+          <ellipse cx="82.5" cy="66.5" rx="6.5" ry="4.5" style="fill:rgb(115,115,115);" />
+        </g>
+        <g transform="matrix(1.04348,0,0,1.07843,-2.17391,-5.96078)">
+          <path d="M74.664,74.297L25.165,74.297C13.669,74.297 5,67.426 5,58.315C5,49.675 9.452,44.916 17.536,44.916C17.822,44.916 18.11,44.918 18.401,44.922C19.046,39.778 22.351,34.904 30.063,34.904C30.998,34.904 31.793,35.084 32.431,35.295C34.703,30.571 39.489,25.704 49.558,25.704C56.525,25.704 62.097,28.294 65.788,33.218C67.443,32.361 69.239,31.914 71.072,31.914C76.671,31.914 81.513,35.97 83.241,41.936C86.393,42.518 89.306,44.232 91.388,46.768C93.42,49.244 95.665,53.665 94.816,60.672C93.799,69.076 86.078,74.297 74.664,74.297ZM17.536,48.745C11.678,48.745 8.83,51.875 8.83,58.315C8.83,66.209 17.246,70.468 25.165,70.468L74.664,70.468C84.125,70.468 90.237,66.634 91.014,60.211C91.556,55.728 90.662,51.92 88.428,49.197C86.675,47.062 84.232,45.774 81.548,45.571C80.693,45.506 79.985,44.881 79.815,44.04C78.831,39.155 75.236,35.743 71.071,35.743C69.42,35.743 67.797,36.299 66.376,37.353C65.944,37.674 65.399,37.801 64.869,37.694C64.342,37.591 63.882,37.271 63.601,36.812C60.652,31.982 55.928,29.532 49.557,29.532C42.219,29.532 37.414,32.515 35.274,38.397C34.946,39.301 33.998,39.821 33.056,39.612C32.675,39.526 32.341,39.382 31.986,39.229C31.421,38.985 30.837,38.733 30.061,38.733C23.141,38.733 22.108,43.835 22.108,46.877C22.108,47.396 21.898,47.892 21.525,48.252C21.152,48.613 20.648,48.82 20.131,48.791C19.256,48.762 18.381,48.745 17.536,48.745Z" style="fill-rule:nonzero;stroke:black;stroke-width:1px;" />
+        </g>
+      </g>
+    </svg>
+    <text :x="el.x" :y="el.y+45" text-anchor="middle" font-size="14">{{el.cidr}}</text>
+  </svg>
+</template>
+
+<script>
+  export default {
+    name: 'network-element',
+    props: ['el'],
+    data: function () {
+      return {
+        filter: null
+      }
+    },
+    methods: {
+      onMouseOver: function () {
+        this.filter = `url(#networkSofGlow${this.el.gid})`
+      },
+      onMouseOut: function () {
+        this.filter = null
+      },
+      onClick: function () {
+        this.$emit('click', this.el)
+      }
+    }
+  }
+</script>
