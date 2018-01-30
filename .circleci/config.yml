@@ -18,14 +18,18 @@ jobs:
               environments:
                   - POSTGRES_USER: ezsetup
                   - POSTGRES_PASSWORD: 123456
+
             - image: redis:3.2
 
         steps:
             - checkout
             - run: sudo pip install -r api/requirements-test.txt
-            - run: mypy --ignore-missing-imports api/app.py
-            - run: mypy --ignore-missing-imports api/tests
-            - run: pytest api/
+            - run: 
+                command: |
+                    cd api
+                    mypy --ignore-missing-imports app.py
+                    mypy --ignore-missing-imports tests
+                    pytest api/
 
 workflows:
     version: 2
