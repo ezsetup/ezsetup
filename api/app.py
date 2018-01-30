@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 from raven.contrib.flask import Sentry
@@ -21,7 +23,9 @@ register(app, [Users, Scenarios, Labs, Cloudconfigs, Slices, Configurations, Fla
 
 CORS(app)
 
-sentry = Sentry(app)
+if os.environ.get('SENTRY_DSN', None):
+    """Enable Sentry if SENTRY_DSN is set"""
+    sentry = Sentry(app)
 
 
 if __name__ == '__main__':
