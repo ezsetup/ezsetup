@@ -3,7 +3,7 @@ jobs:
     api-unittest:
         docker:
             - image: circleci/python:3.6
-              environments:
+              environment:
                   - POSTGRES_USER: ezsetup
                   - POSTGRES_PASSWORD: 123456
                   - POSTGRES_HOST: 127.0.0.1
@@ -15,7 +15,7 @@ jobs:
                   - REDIS_TOKEN_DB: 1
 
             - image: nguyendv/ezsetup-pg-dev:latest
-              environments:
+              environment:
                   - POSTGRES_USER: ezsetup
                   - POSTGRES_PASSWORD: 123456
 
