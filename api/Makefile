@@ -20,7 +20,7 @@ run-tests:
 	# run tests
 	mypy --ignore-missing-imports app.py
 	mypy --ignore-missing-imports tests
-	pytest
+	PYTHONPATH=. pytest
 
 clean-test-containers:
 	# drop test db
