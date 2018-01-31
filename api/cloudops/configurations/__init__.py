@@ -30,19 +30,21 @@ def _get_template_path(templates, name: str) -> str:
             return template['path']
     raise ValueError('invalid `name` parameter. It should be one of the names defined in templates.json')
 
-def _merge_user_data(userdata, new_data) -> Dict:
-    if userdata is None:
-        userdata = new_data
+def _merge_user_data(old_user_data, new_user_data) -> Dict:
+    if old_user_data is None:
+        """Nothing to merge"""
+        old_user_data = new_user_data
     else:
-        for k in new_data:
-            if k in userdata:
-                if isinstance(userdata[k], list):
-                    if isinstance(new_data[k], list):
-                        userdata[k].extend(new_data[k])
+        for key in new_user_data:
+            if key in old_user_data:
+                if isinstance(old_user_data[key], list):
+                """Merge two values of two same key"""
+                    if isinstance(new_user_data[key], list):
+                        old_user_data[key].extend(new_user_data[key])
                     else:
-                        userdata[k].append(new_data[k])
+                        old_user_data[key].append(new_user_data[key])
                 else:
-                    userdata[k]=new_data[k]
+                    old_user_data[key]=new_user_data[key]
             else:
-                userdata[k] = new_data[k]
-    return userdata
+                old_user_data[key] = new_user_data[key]
+    return old_user_data
