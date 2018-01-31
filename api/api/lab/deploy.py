@@ -120,6 +120,7 @@ def _create_routers(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
             name=s['name'],
             status='deploying', x=s['x'], y=s['y'],
             gid=s['gid'], slice_id=sl.id,
+            image=s['image'],
             flavor=s['flavor'],
             configurations=configurations,
             password=password,
@@ -136,7 +137,7 @@ def _create_routers(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
             nets.append(net)
 
         public_ip, attrs = cloudops.create_router(
-                router.name, nets, ips, router.configurations, sec_group_id, router.flavor)
+                router.name, nets, ips, router.configurations, sec_group_id, router.image, router.flavor)
         router.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
 
 

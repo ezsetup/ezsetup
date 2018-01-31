@@ -71,13 +71,13 @@ class CloudOps(object):
 
         return public_ip, cloud_attrs
 
-    def create_router(self, name, networks, ips, configurations, sec_group_id, flavor: dict) -> Tuple[str, object]:
+    def create_router(self, name, networks, ips, configurations, sec_group_id, image_name: str, flavor: dict) -> Tuple[str, object]:
         # Prepare user-data based on configurations list
         configurations.append("shorewall")
         userdata = generate_userdata(configurations)
 
         if self.provider == CloudProvider.OPENSTACK:
-            public_ip, cloud_attrs = self.openstack.create_router(name, networks, ips, userdata, sec_group_id, flavor)
+            public_ip, cloud_attrs = self.openstack.create_router(name, networks, ips, userdata, sec_group_id, image_name, flavor)
         if self.provider == CloudProvider.AWS:
             # TODO: implement flavor for AWS router
             public_ip, cloud_attrs = self.aws.create_router(name, networks, ips, userdata, sec_group_id)
@@ -342,16 +342,9 @@ class Openstack(object):
             'id': instance.id
         }
 
-    def create_router(self, name, networks, ips, user_data, sec_group_id, flavor_dict: dict)-> Tuple[str, object]:
+    def create_router(self, name, networks, ips, user_data, sec_group_id, image_name: str, flavor_dict: dict)-> Tuple[str, object]:
         conn = self.conn
-
-        image = None
-        images = conn.compute.images()
-        for img in images:
-            img_name = img.name.lower()
-            if 'xenial' in img_name or '16.04' in img_name:
-                image = img
-                break
+        image = conn.compute.find_image(image_name)
         # TODO: log error to log stream if image is None
         print('image for router: ', image)
 
