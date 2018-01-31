@@ -23,13 +23,18 @@ jobs:
 
         steps:
             - checkout
-            - run: sudo pip install -r api/requirements-test.txt
+            - run: sudo pip install pipenv
+            - run:
+                command: |
+                    cd api
+                    pipenv --python 3.6
+                    pipenv install -d
             - run: 
                 command: |
                     cd api
-                    mypy --ignore-missing-imports app.py
-                    mypy --ignore-missing-imports tests
-                    PYTHONPATH=. pytest
+                    pipenv run mypy --ignore-missing-imports app.py
+                    pipenv run mypy --ignore-missing-imports tests
+                    PYTHONPATH=. pipenv run pytest
 
 workflows:
     version: 2

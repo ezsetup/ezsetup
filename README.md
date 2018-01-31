@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/nguyendv/ezsetup.svg?style=svg&circle-token=9deee429135839cc89edb061e37530e59546d865)](https://circleci.com/gh/nguyendv/ezsetup)
+
 # ezsetup
 
 ## Introduction
