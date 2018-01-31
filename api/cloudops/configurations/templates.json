@@ -16,5 +16,13 @@
                 "name": "staticroute",
                 "path": "staticroute.yml",
                 "hidden": true
+        },
+        {
+                "name": "apt-sources",
+                "path": "apt-sources.yml"
+        },
+        {
+                "name": "grr-client",
+                "path": "grr-client.yml"
         }
 ]

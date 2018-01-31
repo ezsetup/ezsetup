@@ -1,0 +1,10 @@
+#cloud-config
+# Local APT source for Ubuntu 16.04 (Xenial)
+# TODO: make this configurable
+apt:
+    primary:
+        - arches: [default]
+          uri: "http://172.16.0.2/ubuntu"
+    security:
+        - arches: [default]
+          uri: "http://nova.clouds.archive.ubuntu.com/ubuntu"

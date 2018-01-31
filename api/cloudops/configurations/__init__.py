@@ -37,7 +37,10 @@ def _merge_user_data(userdata, new_data) -> Dict:
         for k in new_data:
             if k in userdata:
                 if isinstance(userdata[k], list):
-                    userdata[k].append(new_data[k])
+                    if isinstance(new_data[k], list):
+                        userdata[k].extend(new_data[k])
+                    else:
+                        userdata[k].append(new_data[k])
                 else:
                     userdata[k]=new_data[k]
             else:
