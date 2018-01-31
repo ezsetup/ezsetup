@@ -38,7 +38,7 @@ def _merge_user_data(old_user_data, new_user_data) -> Dict:
         for key in new_user_data:
             if key in old_user_data:
                 if isinstance(old_user_data[key], list):
-                """Merge two values of two same key"""
+                    """Merge two values of two same key"""
                     if isinstance(new_user_data[key], list):
                         old_user_data[key].extend(new_user_data[key])
                     else:
