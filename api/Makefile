@@ -19,7 +19,7 @@ run-tests:
 	# run tests
 	pipenv run mypy --ignore-missing-imports app.py
 	pipenv run mypy --ignore-missing-imports tests
-	pipenv run pytest
+	PYTHONPATH=. pipenv run pytest
 
 clean-test-containers:
 	# drop test db
