@@ -2,6 +2,11 @@ var path = require('path')
 var utils = require('./utils')
 var config = require('../config')
 var vueLoaderConfig = require('./vue-loader.conf')
+var webpack = require('webpack');
+
+var featureFlags = new webpack.DefinePlugin({
+  __INTERNAL_ONLY__: process.env.INTERNAL_FLAG || false
+});
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
@@ -25,6 +30,7 @@ module.exports = {
       '@': resolve('src')
     }
   },
+  plugins: [featureFlags],
   module: {
     rules: [
       {
