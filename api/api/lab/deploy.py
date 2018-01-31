@@ -166,7 +166,7 @@ def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], to
     password = None
 
     for conf in instance['configurations']:
-        params = {}
+        params : Dict[str, Any] = {}
         if conf == "Enable password authentication" or conf == "noVNC":
             if password is None:
                 password = randomword(8)
