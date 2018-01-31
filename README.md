@@ -8,11 +8,6 @@
 
 ### From Source
 
-0. (Optional, but recommended) Setup a virtual Python environment and activate it:
-    ```bash
-    python3 -m venv
-    source venv/bin/activate
-    ```
 1. Install dependencies:
     - Python >= 3.6
     - Node >= 8.0
@@ -27,7 +22,8 @@
 
 1. Install VirtualBox and Vagrant;
 2. (Optional) Copy `.env.example` file to `.env` and fill in necessary fields;
-3. Run `vagrant up` in your project root directory;
+3. Run `vagrant up` in your project root directory (Windows users need to run this command
+as administrator to avoid the symlink error);
 4. You can file your credentials in the `.env` file in your project root directory.
 
 ## With Docker

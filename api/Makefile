@@ -5,9 +5,8 @@ redis-container = ezsetup-redis-test
 postgres-container = ezsetup-pg-test
 
 run:
-	source venv/bin/activate; \
 	source .env; \
-	python app.py
+	pipenv run python app.py
 
 start-test-containers:
 	# start test redis
@@ -18,9 +17,9 @@ start-test-containers:
 
 run-tests:
 	# run tests
-	mypy --ignore-missing-imports app.py
-	mypy --ignore-missing-imports tests
-	pytest
+	pipenv run mypy --ignore-missing-imports app.py
+	pipenv run mypy --ignore-missing-imports tests
+	pipenv run pytest
 
 clean-test-containers:
 	# drop test db

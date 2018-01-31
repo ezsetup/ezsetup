@@ -74,12 +74,13 @@ Vagrant.configure("2") do |config|
         curl -sL https://deb.nodesource.com/setup_8.x | bash -
         add-apt-repository -y ppa:jonathonf/python-3.6
         apt update
-        apt install -y python3.6 python3.6-dev build-essential python-virtualenv nodejs make redis-server postgresql
+        apt install -y python3.6 python3.6-dev build-essential python3-pip nodejs redis-server postgresql
+        pip3 install pipenv
 
         # Replace credentials
         if [ ! -f /vagrant/.env ]; then
             cd /vagrant
-            cp .env.example .env
+            sed 's/\r$//' .env.example > .env # Change CRLF to LF and copy file
             POSTGRES_PASSWORD=$(echo $RANDOM | sha256sum | base64 | head -c 32 ; echo)
             EZ_ROOT_PASSWORD=$(echo $RANDOM | sha256sum | base64 | head -c 32 ; echo)
             sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${POSTGRES_PASSWORD}/" .env
@@ -99,16 +100,12 @@ EOT
 
         # Set up API server and frontend server
         su vagrant << EOT
-            cd ~
-            virtualenv -p python3.6 venv
-            source venv/bin/activate
-
             cd /vagrant/api
-            pip install -r requirements-dev.txt
-            pip install -r requirements-test.txt
+            pipenv --python python3.6
+            pipenv install
 
             # create ezsetup root user
-            echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | python
+            echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | pipenv run python
 
             cd /vagrant/frontend
             npm install
@@ -117,9 +114,8 @@ EOT
     config.vm.provision :shell, run: "always", inline: <<-SHELL
         source /vagrant/.env
         su vagrant << EOT
-            source ~/venv/bin/activate
             cd /vagrant/api
-            python app.py >> /vagrant/api-server.log 2>&1 &
+            pipenv run python app.py >> /vagrant/api-server.log 2>&1 &
             cd /vagrant/frontend
             npm run dev >> /vagrant/frontend.log 2>&1 &
 EOT

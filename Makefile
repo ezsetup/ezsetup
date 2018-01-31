@@ -2,14 +2,15 @@ redis_container=ezsetup_redis
 pg_container=ezsetup_pg
 
 install:
-	pip install -r api/requirements-dev.txt
-	pip install -r api/requirements-test.txt
-
+	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install -d
 	cd frontend && npm install
 
+install-production:
+	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install
+	cd frontend && npm install --production
 
 run-api: run-dockers
-	source .env && cd api && python app.py &
+	source .env && cd api && pipenv run python app.py &
 
 run-frontend:
 	cd frontend && npm run dev
