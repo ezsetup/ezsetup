@@ -1,0 +1,11 @@
+#cloud-config
+package_update: true
+
+runcmd:
+    - sudo wget http://172.16.0.9/swift/v1/prebuilt_client/grr_3.2.1.1_amd64.deb -q -O /tmp/grr_3.2.1.1_amd64.deb
+    - sudo dpkg --unpack /tmp/grr_3.2.1.1_amd64.deb
+    - >- # labels are comma separated array, like label-1, label-2, label-3
+      sudo sed -i "\$aClient.labels: [ {{ labels|join(', ') }} ]" /usr/lib/grr/grr_3.2.1.1_amd64/grrd.yaml
+    - sudo dpkg --configure grr
+    - sudo apt install -f -y
+    - sudo rm -f /tmp/grr_3.2.1.1_amd64.deb

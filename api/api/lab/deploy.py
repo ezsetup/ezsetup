@@ -2,6 +2,7 @@ from typing import Dict, Any, List, Tuple
 
 from threading import Thread
 from cloudops import CloudOps
+from auth.models import User
 from models import CloudConfig, Slice, Scenario, Instance, NetworkNode, Router, Lab
 
 from api.lab.helpers import randomword
@@ -59,8 +60,8 @@ class DeployThread(Thread):
                     sl.update(cloud_attrs=new_cloud_attrs.value)
 
                     _create_networks(cloudops, sl, topo)
-                    _create_instances(cloudops, sl, topo, sec_group_id)
-                    _create_routers(cloudops, sl, topo, sec_group_id)
+                    _create_instances(cloudops, lab, sl, topo, sec_group_id)
+                    _create_routers(cloudops, lab, sl, topo, sec_group_id)
                     sl.update(status='active')
             lab.update(status='active')
         except Exception as ex:
@@ -79,11 +80,11 @@ def _create_networks(cloudops: CloudOps, sl, topo):
         new_net.update(cloud_attrs=attrs, status='active')
 
 
-def _create_instances(cloudops: CloudOps, sl, topo, sec_group_id):
+def _create_instances(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
     # Prepare and save the instance models
     for s in topo['instances']:
         links = _extract_links(s, topo)
-        configurations, password = _extract_configurations(s, topo)
+        configurations, password = _extract_configurations(lab, sl, s, topo)
 
         Instance.insert(
             name=s['name'],
@@ -110,11 +111,11 @@ def _create_instances(cloudops: CloudOps, sl, topo, sec_group_id):
         instance.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
 
 
-def _create_routers(cloudops: CloudOps, sl, topo, sec_group_id):
+def _create_routers(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
     # Prepare and save the router models
     for s in topo['routers']:
         links = _extract_links(s, topo)
-        configurations, password = _extract_configurations(s, topo)
+        configurations, password = _extract_configurations(lab, sl, s, topo)
         Router.insert(
             name=s['name'],
             status='deploying', x=s['x'], y=s['y'],
@@ -148,7 +149,8 @@ def _extract_links(instance: Dict[str, Any], topo: Dict[str, Any]) -> List:
     return links
 
 
-def _extract_configurations(instance: Dict[str, Any], topo: Dict[str, Any]) -> Tuple[List[Dict[str, Any]], str]:
+def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], topo: Dict[str, Any]) \
+        -> Tuple[List[Dict[str, Any]], str]:
     """extract configurations of an instance base on the topology
     the extracted configurations is a dict of configuration name ('name') and and rendering parameters ('params')
     rendering parameters can be None"""
@@ -164,12 +166,16 @@ def _extract_configurations(instance: Dict[str, Any], topo: Dict[str, Any]) -> T
     password = None
 
     for conf in instance['configurations']:
+        params = {}
         if conf == "Enable password authentication" or conf == "noVNC":
             if password is None:
                 password = randomword(8)
-            configurations.append({"name": conf, "params": {"password": password}})
-        else:
-            configurations.append({"name": conf, "params": {}})
+            params['password'] = password
+        elif conf == "grr-client":
+            user = User.fetchone(id=slice.user_id)
+            params['labels'] = [lab.name, user.email, instance['name']]
+
+        configurations.append({"name": conf, "params": params})
 
     return configurations, password
 
