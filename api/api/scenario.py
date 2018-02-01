@@ -75,6 +75,7 @@ class Scenarios(FlaskView):
                     'id': s.id,
                     'name': s.name,
                     'description': s.description,
+                    'sgRules': s.sg_rules,
                     'topo': s.topo.value
                 }
                 ret.append(r)

@@ -107,7 +107,7 @@ EOT
         su vagrant << EOT
             cd /vagrant/api
             pipenv --python python3.6
-            pipenv install
+            pipenv install -d
 
             # create ezsetup root user
             echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | pipenv run python
