@@ -49,7 +49,7 @@
 
         <div class="columns">
           <label class="column is-4">VNC:</label>
-          <a class="value column" target="_blank" id="console-url" name="console-url" :href="el.public_ip">
+          <a class="value column" target="_blank" id="console-url" name="console-url" :href="'http://'+ el.public_ip + ':6080/vnc.html'">
             Open
           </a>
         </div>

@@ -30,6 +30,7 @@ Vagrant.configure("2") do |config|
     # via 127.0.0.1 to disable public access
     config.vm.network "forwarded_port", guest: 5000, host: 5000
     config.vm.network "forwarded_port", guest: 8080, host: 8080
+    config.vm.network "forwarded_port", guest: 5432, host: 5432
 
     # Create a private network, which allows host-only access to the machine
     # using a specific IP.
@@ -95,7 +96,11 @@ Vagrant.configure("2") do |config|
             psql -c "CREATE ROLE ${POSTGRES_USER} WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';"
             createdb $POSTGRES_USER
             psql -d $POSTGRES_USER -f /vagrant/api/init.sql
+            # Allow any host to connect to the postgresql
+            sed -i "s/.*listen_addresses.*=.*/listen_addresses = '*'/" \\$(psql -c "SHOW config_file;" | grep postgresql.conf)
+            echo -e "\\nhost all all 0.0.0.0/0 trust" | tee -a \\$(psql -c "SHOW hba_file;" | grep pg_hba.conf)
 EOT
+        systemctl restart postgresql*
 
 
         # Set up API server and frontend server

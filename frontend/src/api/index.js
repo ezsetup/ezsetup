@@ -132,13 +132,14 @@ function GETscenario (id, jsonOkCallback) {
     })
 }
 
-function POSTscenario (name, description, isPublic, topo, jsonOkCallback) {
+function POSTscenario (name, description, sgRules, isPublic, topo, jsonOkCallback) {
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
       name: name,
       description: description,
+      sgRules: sgRules,
       isPublic: isPublic,
       topo: topo
     })
@@ -153,13 +154,14 @@ function POSTscenario (name, description, isPublic, topo, jsonOkCallback) {
     })
 }
 
-function PATCHscenario (name, description, isPublic, topo, id, jsonOkCallback) {
+function PATCHscenario (name, description, sgRules, isPublic, topo, id, jsonOkCallback) {
   let options = {
     headers: authHeaders(),
     method: 'PATCH',
     body: JSON.stringify({
       name: name,
       description: description,
+      sgRules: sgRules,
       isPublic: isPublic,
       topo: topo
     })

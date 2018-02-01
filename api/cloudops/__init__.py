@@ -71,13 +71,13 @@ class CloudOps(object):
 
         return public_ip, cloud_attrs
 
-    def create_router(self, name, networks, ips, configurations, sec_group_id, flavor: dict) -> Tuple[str, object]:
+    def create_router(self, name, networks, ips, configurations, sec_group_id, image_name: str, flavor: dict) -> Tuple[str, object]:
         # Prepare user-data based on configurations list
         configurations.append("shorewall")
         userdata = generate_userdata(configurations)
 
         if self.provider == CloudProvider.OPENSTACK:
-            public_ip, cloud_attrs = self.openstack.create_router(name, networks, ips, userdata, sec_group_id, flavor)
+            public_ip, cloud_attrs = self.openstack.create_router(name, networks, ips, userdata, sec_group_id, image_name, flavor)
         if self.provider == CloudProvider.AWS:
             # TODO: implement flavor for AWS router
             public_ip, cloud_attrs = self.aws.create_router(name, networks, ips, userdata, sec_group_id)
@@ -108,6 +108,13 @@ class CloudOps(object):
             return self.openstack.create_security_group(name)
         if self.provider == CloudProvider.AWS:
             return self.aws.create_security_group(name)
+        return None
+
+    def ex_create_security_group_rule(self, security_group_id, **query):
+        if self.provider == CloudProvider.OPENSTACK:
+            return self.openstack.create_security_group_rule(security_group_id, **query)
+        if self.provider == CloudProvider.AWS:
+            return self.aws.create_security_group_rule(security_group_id, **query)
         return None
 
     def ex_delete_security_group(self, name: str, id: str) -> None:
@@ -160,6 +167,21 @@ class Openstack(object):
             print('cloudops.Openstack::test_connection - Unexpected exception ', ex)
             return False
 
+    def create_security_group_rule(self, security_group_id, **query):
+        conn = self.conn
+        sec_group = conn.network.find_security_group(security_group_id)
+        if sec_group is None:
+            return None
+
+        rules = conn.network.security_group_rules(security_group_id=security_group_id, **query)
+        for rule in rules:
+            if rule.port_range_max == query['port_range_max'] and \
+                    rule.port_range_min == query['port_range_min']:
+                return rule.id
+        rule = conn.network.create_security_group_rule(security_group_id=security_group_id, **query)
+
+        return rule.id
+
     def create_security_group(self, name: str):
         conn = self.conn
         sec_group = conn.network.find_security_group(name)
@@ -168,51 +190,30 @@ class Openstack(object):
                 name=name)
 
         # enable ping and rules
-        ping_ipv4_rules = conn.network.security_group_rules(
+        self.create_security_group_rule(
             security_group_id=sec_group.id,
-            protocol='icmp')
-
-        if next(ping_ipv4_rules, None) is None:
-            conn.network.create_security_group_rule(
-                security_group_id=sec_group.id,
-                direction='ingress', remote_ip_prefix='0.0.0.0/0',
-                protocol='icmp', port_range_max=None,
-                port_range_min=None, ethertype='IPv4')
+            direction='ingress', remote_ip_prefix='0.0.0.0/0',
+            protocol='icmp', port_range_max=None,
+            port_range_min=None, ethertype='IPv4')
 
         # allow ssh
-        ssh_ipv4_rules = conn.network.security_group_rules(
+        self.create_security_group_rule(
             security_group_id=sec_group.id,
-            protocol='tcp', port_range_max=22, port_range_min=22,
-            direction='ingress', remote_ip_prefix='0.0.0.0/0')
-
-        if next(ssh_ipv4_rules, None) is None:
-            conn.network.create_security_group_rule(
-                security_group_id=sec_group.id,
-                direction='ingress', remote_ip_prefix='0.0.0.0/0',
-                protocol='tcp', port_range_max=22,
-                port_range_min=22, ethertype='IPv4')
+            direction='ingress', remote_ip_prefix='0.0.0.0/0',
+            protocol='tcp', port_range_max=22,
+            port_range_min=22, ethertype='IPv4')
 
         # allow internal, same group (slice) tcp connections
-        internal_tcp_ipv4_rules = conn.network.security_group_rules(
+        self.create_security_group_rule(
             security_group_id=sec_group.id, direction='ingress',
-            ethertype='IPv4', remote_group_id=sec_group.id
-        )
-
-        if next(internal_tcp_ipv4_rules, None) is None:
-            conn.network.create_security_group_rule(
-                security_group_id=sec_group.id, direction='ingress',
-                ethertype='IPv4', remote_group_id=sec_group.id
-            )
+            ethertype='IPv4', remote_group_id=sec_group.id)
 
         # allow port 6080
-        try:
-            conn.network.create_security_group_rule(
-                    security_group_id=sec_group.id, direction='ingress', remote_ip_prefix='0.0.0.0/0',
-                    protocol='tcp', port_range_max=6080, port_range_min=6080,
-                    ethertype='IPv4')
-        except HttpException as ex:
-            if not "Security group rule already exists" in ex.message:
-                raise ex
+        self.create_security_group_rule(
+            security_group_id=sec_group.id,
+            direction='ingress', remote_ip_prefix='0.0.0.0/0',
+            protocol='tcp', port_range_max=6080, port_range_min=6080,
+            ethertype='IPv4')
 
         return sec_group.id
 
@@ -342,16 +343,9 @@ class Openstack(object):
             'id': instance.id
         }
 
-    def create_router(self, name, networks, ips, user_data, sec_group_id, flavor_dict: dict)-> Tuple[str, object]:
+    def create_router(self, name, networks, ips, user_data, sec_group_id, image_name: str, flavor_dict: dict)-> Tuple[str, object]:
         conn = self.conn
-
-        image = None
-        images = conn.compute.images()
-        for img in images:
-            img_name = img.name.lower()
-            if 'xenial' in img_name or '16.04' in img_name:
-                image = img
-                break
+        image = conn.compute.find_image(image_name)
         # TODO: log error to log stream if image is None
         print('image for router: ', image)
 
@@ -458,6 +452,10 @@ class AWS(object):
         ig.delete()
         vpc = self.ec2.Vpc(vpc_id)
         vpc.delete()
+
+    def create_security_group_rule(self, security_group_id, **query):
+        print('cloudops.AWS::create_security_group_rule - Not implemented')
+        raise Exception
 
     def create_security_group(self, name: str):
         sec_group = self.ec2.create_security_group(

@@ -30,12 +30,37 @@
         <p class="control">
           <input class="input" type="text" placeholder="Scenario name" v-model="name">
         </p>
+        <p class="help is-danger" v-if="!nameValidated">Name cannot be empty</p>
       </div>
       <div class="field">
         <label class="label">Description</label>
         <p class="control">
           <textarea class="textarea" placeholder="Scenario's description" v-model="description"></textarea>
         </p>
+      </div>
+      <div class="field">
+        <label class="label">
+          Security Group Rules
+          <span title="ingress/egress ipv4/ipv6 <protocol> [port number or range(e.g. 8000-9000)] [IP/CIDR]">
+            <i class="fas fa-question-circle"></i>
+          </span>
+        </label>
+        <div class="field" v-for="rule in sgRules" track-by="$index">
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input class="input" type="text" v-model="rule.value" placeholder="e.g.: ingress ipv4 tcp 8080 0.0.0.0/0">
+            </div>
+            <div class="control">
+              <button class="button is-danger" @click="onDeleteSgRule(rule)">
+                <span class="icon">
+                  <i class="fa fa-trash-alt"></i>
+                </span>
+              </button>
+            </div>
+          </div>
+          <p class="help is-danger" v-if="!rule.validated">Wrong security group rule format</p>
+        </div>
+        <button class="button is-primary" @click="onAddSgRule">Add Rule</button>
       </div>
       <div class="field">
         <label class="label">Publicly available</label>
@@ -69,10 +94,10 @@ import NetworkLink from '@/components/networkelements/Link.vue'
 import TempLink from '@/components/networkelements/TempLink.vue'
 
 import {
-  PATCHscenario, 
-  POSTscenario, 
-  GETscenario, 
-  LISTInstanceConfigurations, 
+  PATCHscenario,
+  POSTscenario,
+  GETscenario,
+  LISTInstanceConfigurations,
   LISTRouterConfigurations,
   LISTFlavors
 } from '@/api'
@@ -94,7 +119,9 @@ export default {
   data: function () {
     return {
       name: null,
+      nameValidated: true,
       description: null,
+      sgRules: [],
 
 			topo: null,
 
@@ -173,6 +200,7 @@ export default {
       this.name = json.name
       this.description = json.description
       this.isPublic = json.isPublic
+      this.sgRules = json.sgRules ? json.sgRules.map(rule => ({ value: rule, validated: true })) : [];
 
 			if (json.topo.hasOwnProperty('instances'))
       	this.instances = json.topo.instances
@@ -322,7 +350,7 @@ export default {
 				case 'select':
         	this.selectedElement = element
 					break
-				case 'link':	
+				case 'link':
 					if (this.tempLink === null) {
 						this.tempLink = {
 							network: element,
@@ -438,10 +466,26 @@ export default {
       }
     },
 
+    validateInputs: function () {
+      let flag = true;
+      flag = flag && (this.nameValidated = (this.name.trim() !== ''));
+
+      this.sgRules.forEach(rule => {
+        const SG_RULE_PATTERN = /(ingress|egress)\s+(ipv4|ipv6)\s+([a-z]+)\s*(?:(\d+(?:-\d+)?)?(?:\s|$)+)?(?:((?:(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0-9A-Fa-f]{1,4}|:))|(?:(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){5}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){4}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,3})|(?:(?::[0-9A-Fa-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){3}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,4})|(?:(?::[0-9A-Fa-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){2}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,5})|(?:(?::[0-9A-Fa-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){1}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|(?:(?::[0-9A-Fa-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9A-Fa-f]{1,4}){1,7})|(?:(?::[0-9A-Fa-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?:\/[0-9]{1,2})?(\s|$)))*/;
+        rule.validated = SG_RULE_PATTERN.test(rule.value.trim());
+        flag = flag && rule.validated;
+      });
+
+      return flag;
+    },
+
 		/**
 		 * Event handler when publish btn is clicked
 		 */
     onPublishBtn: function () {
+      if (!this.validateInputs()) {
+        return;
+      }
       this.error = null
       this.isPublishing = true
 			let topo = {
@@ -450,16 +494,32 @@ export default {
 				routers: this.routers,
 				links: this.links
 			}
+			let sgRules = this.sgRules.map(rule => rule.value.trim()).filter(rule => rule !== '');
 			if (this.isNewScenario) {
-				POSTscenario(this.name, this.description, this.isPublic, topo, json => {
+				POSTscenario(this.name, this.description, sgRules, this.isPublic, topo, json => {
 					this.$router.push('/scenarios/')
 				})
 			} else {
-				PATCHscenario(this.name, this.description, this.isPublic, topo, this.$route.params.id, json => {
+				PATCHscenario(this.name, this.description, sgRules, this.isPublic, topo, this.$route.params.id, json => {
 					this.$router.push('/scenarios/')
 				})
 			}
     },
+
+
+    onAddSgRule: function () {
+      let length = this.sgRules.length;
+    	if (length === 0 || this.sgRules[length - 1].value.trim() !== '') {
+      	this.sgRules.push({ value: '', validated: true });
+      }
+    },
+
+    onDeleteSgRule: function (rule) {
+    	let index = this.sgRules.indexOf(rule);
+      if (index > -1) {
+        this.sgRules.splice(index, 1);
+      }
+    }
   }
 }
 </script>

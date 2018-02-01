@@ -25,7 +25,7 @@ class Scenarios(FlaskView):
         scenario = Scenario.fetchone(id=id)
         if scenario is not None:
             return jsonify(id=scenario.id, name=scenario.name,
-                           description=scenario.description, topo=scenario.topo.value,
+                           description=scenario.description, sgRules=scenario.sg_rules, topo=scenario.topo.value,
                            isPublic=scenario.is_public.value)
         else:
             return jsonify(message="scenario not found"), 404
@@ -35,8 +35,9 @@ class Scenarios(FlaskView):
         description = request.get_json()['description']
         topo = request.get_json()['topo']
         isPublic = request.get_json()['isPublic']
+        sgRules = request.get_json()['sgRules']
         new_scenario = Scenario(owner_id=g.user['id'],
-                                name=name, description=description, topo=topo, is_public=isPublic)
+                                name=name, description=description, topo=topo, is_public=isPublic, sg_rules=sgRules)
         try:
             new_scenario.save()
         except UniqueViolatedError:
@@ -52,10 +53,12 @@ class Scenarios(FlaskView):
         description = request.get_json()['description']
         topo = request.get_json()['topo']
         isPublic = request.get_json()['isPublic']
+        sgRules = request.get_json()['sgRules']
         scenario.name = name
         scenario.description = description
         scenario.topo = topo
         scenario.is_public = isPublic
+        scenario.sg_rules = sgRules
         scenario.save()
         return jsonify(id=id)
 

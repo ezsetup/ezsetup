@@ -7,6 +7,7 @@ class Scenario(Model):
     description = TextField()
     owner_id = IntegerField()
     is_public = BooleanField()
+    sg_rules = ArrayField() # ALTER TABLE public.scenarios ADD sg_rules TEXT[] DEFAULT array[]::TEXT[];
     topo = JsonBField()
 
     class Meta:

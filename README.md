@@ -41,6 +41,7 @@ as administrator to avoid the symlink error);
 - **Python**: [PEP 8](https://www.python.org/dev/peps/pep-0008/)
 
 ### Developing and Deploying
+- **API Style**: [GitHub API v3](https://developer.github.com/v3/)
 - **Git Commit Style**: [AngularJS Git Commit Message Conventions](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit)
 - **Veriosning**: [Semantic Versioning 2.0.0](https://semver.org/)
 
