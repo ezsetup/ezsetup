@@ -20,6 +20,11 @@
 3. Run `make run-api` to start the `api` server;
 4. In another terminal session, run `make run-frontend` to start the `frontend` server.
 
+#### Troubleshooting
+
+Q: The Postgres docker container seems not up to date with the newest db schema?
+A: Complete remove the existing container and its volume: `docker rm -v ezsetup_pg` and run `make run-dockers`. Warning: doing this will destroy all data in the existing container.
+
 ## With Vagrant
 
 1. Install VirtualBox and Vagrant;

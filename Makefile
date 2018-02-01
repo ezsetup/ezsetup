@@ -20,5 +20,5 @@ run-dockers:
 	docker run --name ${redis_container} --restart=unless-stopped -d -p ${REDIS_PORT}:6379 redis:3.2
 
 	[[ $$(docker ps -f "name=${pg_container}" --format '{{.Names}}') == ${pg_container} ]] || \
-	docker run -d -p ${POSTGRES_PORT}:5432 --name ${pg_container} --restart=unless-stopped -e POSTGRES_USER=${POSTGRES_USER} -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -e PGDATA=${PGDATA} -v $(CURDIR)/pgdata:${PGDATA} registry.gitlab.com/promises/pg:${PG_IMAGE_VERSION}
+	docker run -d -p ${POSTGRES_PORT}:5432 --name ${pg_container} --restart=unless-stopped -e POSTGRES_USER=${POSTGRES_USER} -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -e PGDATA=${PGDATA} -v $(CURDIR)/pgdata:${PGDATA} nguyendv/ezsetup-pg-dev:latest
 
