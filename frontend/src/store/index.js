@@ -9,7 +9,8 @@ export default new Vuex.Store({
 
   state: {
     auth: null,
-    userInfo: null
+    userInfo: null,
+    userConsent: false
   },
   // persist state to cookies
   plugins: [
@@ -36,8 +37,14 @@ export default new Vuex.Store({
       state.userInfo = payload
     },
 
+    setUserConsent (state, consent) {
+      state.userConsent = consent
+    },
+
     logout (state) {
       state.auth = null
+      state.userInfo = null
+      state.userConsent = false
     }
   }
 })

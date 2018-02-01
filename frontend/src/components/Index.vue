@@ -1,5 +1,5 @@
 <template>
-  <div class="my-main">
+  <div v-if="this.$store.state.userConsent" class="my-main">
     <div v-if="permissionGroups" class="tabs">
       <ul>
         <li v-if="permissionGroups.includes('labs')" :class="{'is-active': this.$route.path.includes('/labs')}">
@@ -18,6 +18,26 @@
     </div>
     <router-view></router-view>
   </div>
+  <div v-else class="modal is-active"> 
+    <div class="modal-background"></div>
+    <div class="modal-content">
+      <div class="box">
+        <h3 class="title is-3">User Agreement</h3>
+        <p>TODO: add text here</p>
+        <div class="field">
+          <label class="label">Your name:</label>
+          <div class="control">
+            <input class="input" type="text" placeholder="Enter your name here to accept these terms above" v-model="consentUserName">
+          </div>
+        </div>
+
+        <button v-if="consentUserName" class="button" @click="()=>this.$store.commit('setUserConsent', true)">Accept</button>
+        <button v-else disabled class="button">Accept</button>
+        <button class="button" @click="()=>{this.$store.commit('logout'); this.$router.push('/login');}">Decline</button>
+      </div>
+    </div>
+  </div>
+  </div>
 </template>
 
 <script>
@@ -34,7 +54,8 @@ export default {
   components: {},
   data: function () {
     return {
-      permissionGroups: null
+      permissionGroups: null,
+      consentUserName: null,
     }
   },
   beforeRouteEnter: (to, from, next) => {
