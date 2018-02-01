@@ -43,17 +43,3 @@ as administrator to avoid the symlink error);
 ### Developing and Deploying
 - **Git Commit Style**: [AngularJS Git Commit Message Conventions](https://github.com/angular/angular/blob/master/CONTRIBUTING.md#commit)
 - **Veriosning**: [Semantic Versioning 2.0.0](https://semver.org/)
-
-#### For UALR Internal version only
-We use feature flags for dividing the stable version with the UALR internal version. Any code for the internal version should be put inside `__INTERNAL_ONLY__` flag:
- **frontend**:
-```
-if (__INTERNAL_ONLY__) {
-  // do something for ther internal version only
-}
-```
-
-Use `INTERNAL_ONLY=true npm run dev` to see the changes.
-
-**backend**:
-TODO
