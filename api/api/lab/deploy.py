@@ -1,3 +1,4 @@
+import re
 from typing import Dict, Any, List, Tuple
 
 from threading import Thread
@@ -59,6 +60,9 @@ class DeployThread(Thread):
                     new_cloud_attrs['sec_group_id'] = sec_group_id
                     sl.update(cloud_attrs=new_cloud_attrs.value)
 
+                    for rule in scenario.sg_rules:
+                        _add_security_group_rule(cloudops, sec_group_id, rule)
+
                     _create_networks(cloudops, sl, topo)
                     _create_instances(cloudops, lab, sl, topo, sec_group_id)
                     _create_routers(cloudops, lab, sl, topo, sec_group_id)
@@ -68,6 +72,41 @@ class DeployThread(Thread):
             lab.update(status='deployfailed')
             # TODO: delete all deployed resources, so the deployment process can be restarted
             sentry_raven.captureException()
+
+
+def _add_security_group_rule(cloudops: CloudOps, security_group_id, rule: str):
+    regex = '(ingress|egress)\s+(ipv4|ipv6)\s+([a-z]+)\s*(?:(\d+(?:-\d+)?)?(?:\s|$)+)?(?:((?:(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0-9A-Fa-f]{1,4}|:))|(?:(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){5}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){4}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,3})|(?:(?::[0-9A-Fa-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){3}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,4})|(?:(?::[0-9A-Fa-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){2}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,5})|(?:(?::[0-9A-Fa-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){1}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|(?:(?::[0-9A-Fa-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9A-Fa-f]{1,4}){1,7})|(?:(?::[0-9A-Fa-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?:\/[0-9]{1,2})?(\s|$)))*'
+
+    matches = re.finditer(regex, rule)
+
+    query = None
+    for _, match in enumerate(matches):
+        query = {}
+        for group_id, segment in enumerate(match.groups()):
+            group_id += 1
+            if group_id == 1:
+                query['direction'] = segment
+            elif group_id == 2:
+                ethertype = segment
+                query['ethertype'] = ethertype[:2].upper() + ethertype[2:]
+            elif group_id == 3:
+                query['protocol'] = segment
+            elif group_id == 4:
+                port = segment
+                if port is None:
+                    query['port_range_max'] = None
+                    query['port_range_min'] = None
+                else:
+                    range = port.split('-')
+                    query['port_range_max'] = query['port_range_min'] = range[0]
+                    if len(range) == 2:
+                        query['port_range_max'] = range[1]
+            elif group_id == 5:
+                query['remote_ip_prefix'] = segment
+        break
+
+    if query is not None:
+        cloudops.ex_create_security_group_rule(security_group_id, **query)
 
 
 def _create_networks(cloudops: CloudOps, sl, topo):
