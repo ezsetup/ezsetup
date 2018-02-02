@@ -94,8 +94,8 @@ Vagrant.configure("2") do |config|
         # set up database
         su postgres << EOT
             psql -c "CREATE ROLE ${POSTGRES_USER} WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';"
-            createdb $POSTGRES_USER
-            psql -d $POSTGRES_USER -f /vagrant/api/init.sql
+            createdb ${POSTGRES_USER}
+            cat api/database/migrations/*.sql | psql -d ${POSTGRES_USER}
             # Allow any host to connect to the postgresql
             sed -i "s/.*listen_addresses.*=.*/listen_addresses = '*'/" \\$(psql -c "SHOW config_file;" | grep postgresql.conf)
             echo -e "\\nhost all all 0.0.0.0/0 trust" | tee -a \\$(psql -c "SHOW hba_file;" | grep pg_hba.conf)
@@ -110,7 +110,7 @@ EOT
             pipenv install -d
 
             # create ezsetup root user
-            echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | pipenv run python
+            # echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | pipenv run python
 
             cd /vagrant/frontend
             npm install

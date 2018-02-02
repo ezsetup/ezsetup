@@ -14,28 +14,45 @@
     - Python >= 3.6
     - Node >= 8.0
     - GNU make
-    - Docker
-1. Run `make install` to install requirements for the `frontend` and `api` projects;
-2. Copy `.env.example` file to `.env` and fill in necessary fields;
-3. Run `make run-api` to start the `api` server;
-4. In another terminal session, run `make run-frontend` to start the `frontend` server.
+    - PostgreSQL >= 9.6
+    - Redis >= 3.2
+    - pipenv
+2. Copy `.env.example` file to `.env` and fill in necessary fields, and load environment variables by:
 
-#### Troubleshooting
+    ```bash
+    source .env
+    ```
+3. Initialize database using migration files under `api/database/migrations`
 
-Q: The Postgres docker container seems not up to date with the newest db schema?
-A: Complete remove the existing container and its volume: `docker rm -v ezsetup_pg` and run `make run-dockers`. Warning: doing this will destroy all data in the existing container.
+    ```bash
+    sudo su postgres -c "psql -c \"CREATE ROLE ${POSTGRES_USER} WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';\""
+    sudo su postgres -c "createdb ${POSTGRES_USER}"
+    sudo su postgres -c "cat api/database/migrations/*.sql | psql -d ${POSTGRES_USER}"
+    ```
+4. Run `make install` to install requirements for the `frontend` and `api` projects;
+5. Run `make run-api` to start the `api` server, or `make run-frontend` to start the `frontend` server. Run `make test` 
+to execute tests.
 
 ## With Vagrant
 
 1. Install VirtualBox and Vagrant;
-2. (Optional) Copy `.env.example` file to `.env` and fill in necessary fields;
-3. Run `vagrant up` in your project root directory (Windows users need to run this command
-as administrator to avoid the symlink error);
-4. You can file your credentials in the `.env` file in your project root directory.
+2. Copy `.env.example` file to `.env` and fill in necessary fields;
+3. Run `vagrant up` from your project root directory (Windows users need to run this command as administrator to avoid 
+the symlink error);
 
 ## With Docker
 
-<!-- TODO -->
+1. Install Docker and docker-compose;
+2. Copy `.env.example` file to `.env` and fill in necessary fields, and load environment variables by:
+
+    ```bash
+    source .env
+    ```
+3. Run `docker-compose up` from your project directory to bring up services. To execute tests, run
+
+    ```bash
+    docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+    ```
 
 ## Contributing
 
