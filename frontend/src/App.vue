@@ -24,13 +24,3 @@
   margin-top: 60px;
 }
 </style>
-
-<style scoped>
-  .my-nav{
-    margin: 200px;
-  }
-
-  .ffff {
-    margin-top: 200px;
-  }
-</style

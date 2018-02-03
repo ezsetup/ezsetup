@@ -1,97 +1,91 @@
 <template>
   <div class="main">
-		<div class="columns">
-      <div class="column is-1 toolbox">
-        <ToolBox :currentTool="currentTool" @currentToolChange="onCurrentToolChange">
-        </ToolBox>
-        <hr/>
-        <h5 class="title is-5 has-text-centered">Backup / Restore</h5>
-        <a class="button is-small is-fullwidth" :href="backupURL" download="scenario_backup.json">Backup</a>
-        <a class="button is-small is-fullwidth" href="#">Restore</a>
-      </div>
-
-			<svg ref="svg" class="column workspace" width="100%" height="700" @click="onMainSVGClick" @mousemove="onMouseMove">
-
-				<NetworkLink v-for="el in links" :key="el.gid" :el="el" @click="onLinkClick"></NetworkLink>
-				<NetworkNode v-for="el in networks" :key="el.gid" :el="el" @click="onNetworkClick"></NetworkNode>
-				<Instance v-for="el in instances" :key="el.gid" :el="el" @click="onInstanceClick"></Instance>
-				<Router v-for="el in routers" :key="el.gid" :el="el" @click="onRouterClick"></Router>
-				<TempLink v-if="tempLink !== null" :tempLink="tempLink"></TempLink>
-			</svg>
-
-			<div class="column is-2 property">
-				<PropertiesEditor :el="selectedElement" :instanceConfigurations="instanceConfigurations" :routerConfigurations="routerConfigurations" :flavors="flavors" @delete="onDeleteElement($event)"></PropertiesEditor>
-			</div>
-		</div>
-
-    <div class="center">
-      <div class="field">
-        <label class="label">Name</label>
-        <p class="control">
-          <input class="input" type="text" placeholder="Scenario name" v-model="name">
-        </p>
-        <p class="help is-danger" v-if="!nameValidated">Name cannot be empty</p>
-      </div>
-      <div class="field">
-        <label class="label">Description</label>
-        <p class="control">
-          <textarea class="textarea" placeholder="Scenario's description" v-model="description"></textarea>
-        </p>
-      </div>
-      <div class="field">
-        <label class="label">
-          Security Group Rules
-          <span title="ingress/egress ipv4/ipv6 <protocol> [port number or range(e.g. 8000-9000)] [IP/CIDR]">
-            <i class="fas fa-question-circle"></i>
-          </span>
-        </label>
-        <div class="field" v-for="rule in sgRules" track-by="$index">
-          <div class="field has-addons">
-            <div class="control is-expanded">
-              <input class="input" type="text" v-model="rule.value" placeholder="e.g.: ingress ipv4 tcp 8080 0.0.0.0/0">
-            </div>
-            <div class="control">
-              <button class="button is-danger" @click="onDeleteSgRule(rule)">
-                <span class="icon">
-                  <i class="fa fa-trash-alt"></i>
-                </span>
-              </button>
-            </div>
-          </div>
-          <p class="help is-danger" v-if="!rule.validated">Wrong security group rule format</p>
-        </div>
-        <button class="button is-primary" @click="onAddSgRule">Add Rule</button>
-      </div>
-      <div class="field">
-        <label class="label">Publicly available</label>
-        <p class="control">
-          <label class="radio">
-            <input type="radio" value=true v-model="isPublic"> Yes
-          </label>
-          <label class="radio">
-            <input type="radio" value=false v-model="isPublic"> No
-          </label>
-        </p>
-      </div>
-      <div class="field">
-        <button v-if="isPublishing" type="submit" class="button is-primary is-loading">Publish</button>
-        <button v-else-if="isNewScenario" type="submit" @click="onPublishBtn" class="button is-primary">Publish</button>
-        <button v-else type="submit" @click="onPublishBtn" class="button is-primary">Update</button>
-        <p v-if="error" class="is-danger">{{error}}</p>
+    <div class="columns">
+      <div class="column">
+        <h2 class="title is-2">{{ meta.name }}</h2>
       </div>
     </div>
+
+    <div class="columns">
+      <div class="column is-narrow">
+        <Toolbar :toggle="true" :initialTool="currentTool" :tools="primaryTools" @toolClick="onPrimaryToolClick"></Toolbar>
+      </div>
+      <div class="column is-narrow">
+        <Toolbar :toggle="false" :tools="secondaryTools" @toolClick="onSecondaryToolClick"></Toolbar>
+      </div>
+      <div class="column is-narrow">
+        <Toolbar :toggle="false" :tools="publishTools" @toolClick="onPublishToolClick"></Toolbar>
+      </div>
+    </div>
+
+    <div class="columns">
+      <div class="column panel-container">
+        <svg ref="svg" class="workspace" width="100%" height="700" @click.self.stop="onMainSVGClick" @mousemove="onMouseMove">
+          <NetworkLink v-for="el in links" :key="el.gid" :el="el" @click="onLinkClick"></NetworkLink>
+          <NetworkNode v-for="el in networks" :key="el.gid" :el="el" @click="onNetworkClick"></NetworkNode>
+          <Instance v-for="el in instances" :key="el.gid" :el="el" @click="onInstanceClick"></Instance>
+          <Router v-for="el in routers" :key="el.gid" :el="el" @click="onRouterClick"></Router>
+          <TempLink v-if="tempLink !== null" :tempLink="tempLink"></TempLink>
+        </svg>
+
+      <LinkPropertiesPanel v-if="selectionType === 'link'"
+        :link="selectedElement"
+        @confirm="updateLink"
+        @cancel="selectionType = ''"></LinkPropertiesPanel>
+
+      <InstancePropertiesPanel v-if="selectionType === 'instance'"
+        :flavors="flavors"
+        :instance="selectedElement"
+        :instanceConfigurations="instanceConfigurations"
+        @confirm="updateInstance"
+        @cancel="selectionType = ''"></InstancePropertiesPanel>
+
+      <RouterPropertiesPanel v-if="selectionType === 'router'"
+        :flavors="flavors"
+        :router="selectedElement"
+        :routerConfigurations="routerConfigurations"
+        @confirm="updateRouter"
+        @cancel="selectionType = ''"></RouterPropertiesPanel>
+
+      <NetworkPropertiesPanel v-if="selectionType === 'network'"
+        :network="selectedElement"
+        @confirm="updateNetwork"
+        @cancel="selectionType = ''"></NetworkPropertiesPanel>
+
+      <ScenarioMetaPanel v-if="selectionType === 'scenario'"
+        :scenario="selectedElement"
+        @confirm="updateScenarioMeta"
+        @cancel="selectionType = ''"></ScenarioMetaPanel>
+
+      </div>
+    </div>
+
+    <article v-if="message.error" class="message is-danger">
+      <div class="message-header">
+        <p>Error</p>
+        <button class="delete" @click="message.error = ''"></button>
+      </div>
+      <div class="message-body">
+        {{ message.error }}
+      </div>
+    </article>
   </div>
 </template>
 
 <script>
-import PropertiesEditor from '@/components/scenarios/PropertiesEditor.vue'
-import ToolBox from '@/components/scenarios/ToolBox.vue'
+import Toolbar from '@/components/scenarios/Toolbar.vue'
 
 import Instance from '@/components/networkelements/Instance.vue'
 import Router from '@/components/networkelements/Router.vue'
 import NetworkNode from '@/components/networkelements/Network.vue'
 import NetworkLink from '@/components/networkelements/Link.vue'
 import TempLink from '@/components/networkelements/TempLink.vue'
+
+import LinkPropertiesPanel from '@/components/scenarios/panels/LinkPropertiesPanel.vue'
+import InstancePropertiesPanel from '@/components/scenarios/panels/InstancePropertiesPanel.vue'
+import RouterPropertiesPanel from '@/components/scenarios/panels/RouterPropertiesPanel.vue'
+import NetworkPropertiesPanel from '@/components/scenarios/panels/NetworkPropertiesPanel.vue'
+import ScenarioMetaPanel from '@/components/scenarios/panels/ScenarioMetaPanel.vue'
 
 import {
   PATCHscenario,
@@ -107,169 +101,183 @@ const uuidv1 = require('uuid/v1')
 export default {
   name: "ScenarioEditor",
   components: {
-    ToolBox,
-    PropertiesEditor,
+    Toolbar,
 
     Instance,
-		Router,
+    Router,
     NetworkNode,
     NetworkLink,
     TempLink,
+
+    LinkPropertiesPanel,
+    InstancePropertiesPanel,
+    RouterPropertiesPanel,
+    NetworkPropertiesPanel,
+    ScenarioMetaPanel
   },
   data: function () {
     return {
-      name: null,
-      nameValidated: true,
-      description: null,
-      sgRules: [],
+      isNewScenario: false,
 
-			topo: null,
-
-      isPublic: false,
-      isPublishing: false,
-			isNewScenario: false,
-
-
-      error: null,
+      meta: {
+        name: 'Untitled Scenario',
+        description: '',
+        securityGroupRules: [],
+        isPublic: false,
+      },
 
       currentTool: 'select',
-      selectedElement: null, // the element is selected on the screen using select tool
-      tempLink: null,
+      primaryTools: [
+        { name: 'select', icon: 'mouse-pointer', title: '' },
+        { name: 'instance', icon: 'server', title: 'Instance' },
+        { name: 'router', icon: 'cube', title: 'Router' },
+        { name: 'network', icon: 'cloud', title: 'Network' },
+        { name: 'link', icon: 'link', title: 'Link' },
+        { name: 'delete', icon: 'trash-alt', title: '' }
+      ],
+      secondaryTools: [
+        { name: 'import', icon: 'upload', title: 'Import', disabled: true },
+        { name: 'export', icon: 'download', title: 'Export' }
+      ],
+      publishTools: [
+        { name: 'save', icon: 'save', title: '', theme: 'is-success' },
+        { name: 'delete', icon: 'trash-alt', title: 'Delete Scenario', hidden: true, disabled: true },
+      ],
 
-			networks: [],
-			instances: [],
-			routers: [],
-			links: [],
+      selectionType: '',
+      selectedElement: null, // the element is selected on the screen using select tool
+
+      tempLink: null,
+      networks: [],
+      instances: [],
+      routers: [],
+      links: [],
 
       instanceConfigurations: [],
       routerConfigurations: [],
 
-      flavors: []
+      flavors: [],
+
+      message: {
+        error: ''
+      }
     }
   },
 
   beforeRouteEnter: function (to, from, next) {
-		if (to.name === "ScenarioEditor") {
-			GETscenario(to.params.id, json => {
-				next(vm => vm.setData(json))
-			})
-		} else {
-			next()
-		}
+    if (to.name === "ScenarioEditor") {
+      GETscenario(to.params.id, json => {
+        next(vm => vm.setData(json))
+      });
+    } else {
+      next();
+    }
   },
 
-	created: function () {
-		switch (this.$route.name) {
-			case "ScenarioEditor":
-				this.isNewScenario = false
-				break
-			case "NewScenario":
-				this.isNewScenario = true
-				break
-		}
+  created: function () {
+    switch (this.$route.name) {
+      case "ScenarioEditor":
+        this.isNewScenario = false;
+        this.publishTools.find(tool => tool.name === 'save').title = 'Update';
+        this.publishTools.find(tool => tool.name === 'delete').hidden = false;
+        break;
+      case "NewScenario":
+        this.isNewScenario = true;
+        this.publishTools.find(tool => tool.name === 'save').title = 'Create';
+        this.publishTools.find(tool => tool.name === 'delete').hidden = true;
+        this.selectionType = 'scenario';
+        this.selectedElement = this.meta;
+        break;
+    }
 
     LISTInstanceConfigurations(json => {
       this.instanceConfigurations = json
-    })
+    });
 
     LISTRouterConfigurations(json => {
       this.routerConfigurations = json
-    })
+    });
 
     LISTFlavors(json => {
       this.flavors = json
-    })
-	},
+    });
+  },
 
   computed: {
-    backupURL: function () {
-      let topo = {
+    topo() {
+      return {
         networks: this.networks,
-        routers: this.routers,
         instances: this.instances,
-        links: this.links,
+        routers: this.routers,
+        links: this.links
       }
-      let json = JSON.stringify(topo)
-      let blob = new Blob([json], {type: "application/json"})
-      return URL.createObjectURL(blob)
     }
   },
 
   methods: {
     setData: function (json) {
-      this.name = json.name
-      this.description = json.description
-      this.isPublic = json.isPublic
-      this.sgRules = json.sgRules ? json.sgRules.map(rule => ({ value: rule, validated: true })) : [];
-
-			if (json.topo.hasOwnProperty('instances'))
-      	this.instances = json.topo.instances
-
-			if (json.topo.hasOwnProperty('networks'))
-      	this.networks = json.topo.networks
-
-			if (json.topo.hasOwnProperty('routers'))
-				this.routers = json.topo.routers
-
-			if (json.topo.hasOwnProperty('links'))
-				this.links = json.topo.links
+      this.meta = {
+        name: json.name ? json.name : '',
+        description: json.description ? json.description : '',
+        isPublic: !!json.isPublic,
+        securityGroupRules: Array.isArray(json.sgRules) ? json.sgRules : [],
+      };
+      this.instances = json.topo.hasOwnProperty('instances') ? json.topo.instances : [];
+      this.networks = json.topo.hasOwnProperty('networks') ? json.topo.networks : [];
+      this.routers = json.topo.hasOwnProperty('routers') ? json.topo.routers : [];
+      this.links = json.topo.hasOwnProperty('links') ? json.topo.links : [];
+      this.selectionType = 'scenario';
+      this.selectedElement = this.meta;
     },
 
-		/**
-		 * Event handler when user select a new tool in ToolBox
-		 */
-    onCurrentToolChange: function (newTool) {
-      this.currentTool = newTool
-      this.tempLink = null
+    /**
+     * Event handler when user select a new tool in ToolBox
+     */
+    onPrimaryToolClick (name) {
+      this.currentTool = name;
+      this.tempLink = null;
     },
 
-		/**
-		 * Event handler when user delete a network component from the topo designer
-		 */
-    onDeleteElement: function (elId) {
-      switch (this.selectedElement.type) {
-        case 'NetworkLink': {
-					this.links = this.links.filter(el => {
-						return el.gid !== elId
-					})
-          break
-        }
-        case 'NetworkNode': {
-          this.networks = this.networks.filter(el => {
-            return el.gid !== elId
-          })
-					this.links = this.links.filter(el => {
-            return ! (el.network.gid === elId)
-					})
-          break
-        }
-        case 'Instance': {
-          this.instances = this.instances.filter(el => {
-            return el.gid !== elId
-          })
-					this.links = this.links.filter(el => {
-						return el.target.gid !== elId
-					})
-          break
-        }
-				case 'Router': {
-					this.routers = this.routers.filter(el => {
-						return el.gid !== elId
-					})
-					this.links = this.links.filter(el => {
-						return el.target.gid !== elId
-					})
-				}
-        case 'default': {
-          break
-        }
+    onSecondaryToolClick(name) {
+      switch (name) {
+        case 'import':
+          break;
+        case 'export':
+          this.download();
+          break;
       }
-      this.selectedElement = null
     },
 
-		/**
-		 * Event handler when main svg is clicked.
-		 */
+    onPublishToolClick(name) {
+      switch (name) {
+        case 'save':
+          let button = this.publishTools.find(tool => tool.name === 'save');
+          button.theme += ' is-loading';
+          button.disabled = true;
+          let rules = this.meta.securityGroupRules.map(rule => rule.value.trim()).filter(rule => rule !== '');
+          let onSuccess = () => this.$router.push('/scenarios/');
+          let onFailed = json => {
+            button.theme = 'is-success';
+            button.disabled = false;
+            if (json && json.message) {
+              this.message.error = json.message;
+            }
+          };
+          if (this.isNewScenario) {
+            POSTscenario(this.meta.name, this.meta.description, rules, this.meta.isPublic, this.topo, onSuccess, onFailed);
+          } else {
+            PATCHscenario(this.meta.name, this.meta.description, rules, this.meta.isPublic, this.topo,
+              this.$route.params.id, onSuccess, onFailed);
+          }
+          break;
+        case 'delete':
+          break;
+      }
+    },
+
+    /**
+     * Event handler when main svg is clicked.
+     */
     onMainSVGClick: function (e) {
       let svg = this.$refs.svg
       let pt = svg.createSVGPoint()
@@ -281,7 +289,7 @@ export default {
         case 'network':
           {
             let newNetwork = {
-							gid: uuidv1(),
+              gid: uuidv1(),
               type: 'NetworkNode',
               name: 'Network' + this.networks.length,
               x: realPt.x,
@@ -294,7 +302,7 @@ export default {
         case 'instance':
           {
             let newInstance = {
-							gid: uuidv1(),
+              gid: uuidv1(),
               type: 'Instance',
               name: 'Instance' + this.instances.length,
               x: realPt.x,
@@ -320,6 +328,9 @@ export default {
             this.routers.push(newRouter)
             break
           }
+        default:
+          this.selectedElement = this.meta;
+          this.selectionType = 'scenario';
       }
     },
 
@@ -346,209 +357,244 @@ export default {
     },
 
     onNetworkClick: function(element) {
-			switch (this.currentTool) {
-				case 'select':
-        	this.selectedElement = element
-					break
-				case 'link':
-					if (this.tempLink === null) {
-						this.tempLink = {
-							network: element,
-							x1: element.x,
-							y1: element.y,
-							x2: element.x,
-							y2: element.y,
-							target: null
-						}
-					} else {
-						// a link is drawn from an instance or router
-						if (this.tempLink.network === null) {
-							let network = element
-							let target = this.tempLink.target
-							let newLink = {
-								gid: uuidv1(),
-								name: `${network.name}_${target.name}`,
-								type: 'NetworkLink',
-								network: network,
-								target: target,
-								ip: null
-							}
-							if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
-									this.links.push(newLink)
-									this.tempLink = null
-							}
-						}
-					}
-				break
-			}
+      switch (this.currentTool) {
+        case 'select':
+          this.selectedElement = element;
+          this.selectionType = 'network';
+          break;
+        case 'delete':
+          if (this.selectedElement === element || (this.selectionType === 'link'
+              && this.selectedElement.network.gid === element.gid)) {
+            this.selectedElement = null;
+            this.selectionType = '';
+          }
+          this.networks = this.networks.filter(network => network.gid !== element.gid);
+          this.links = this.links.filter(link => link.network.gid !== element.gid);
+          break;
+        case 'link':
+          if (this.tempLink === null) {
+            this.tempLink = {
+              network: element,
+              x1: element.x,
+              y1: element.y,
+              x2: element.x,
+              y2: element.y,
+              target: null
+            }
+          } else {
+            // a link is drawn from an instance or router
+            if (this.tempLink.network === null) {
+              let network = element
+              let target = this.tempLink.target
+              let newLink = {
+                gid: uuidv1(),
+                name: `${network.name}_${target.name}`,
+                type: 'NetworkLink',
+                network: network,
+                target: target,
+                ip: null
+              }
+              if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
+                  this.links.push(newLink)
+                  this.tempLink = null
+              }
+            }
+          }
+        break
+      }
     },
 
     onRouterClick: function(element) {
       switch (this.currentTool) {
-        case 'select': {
-          this.selectedElement = element
+        case 'select':
+          this.selectedElement = element;
+          this.selectionType = 'router';
           break;
-        }
+        case 'delete':
+          if (this.selectedElement === element || (this.selectionType === 'link'
+              && this.selectedElement.target.gid === element.gid)) {
+            this.selectedElement = null;
+            this.selectionType = '';
+          }
+          this.routers = this.routers.filter(router => router.gid !== element.gid);
+          this.links = this.links.filter(link => link.target.gid !== element.gid);
+          break;
         case 'link': {
-					if (this.tempLink === null){
-						this.tempLink = {
-							network: null,
-							target: element,
-							x1: element.x,
-							y1: element.y,
-							x2: element.x,
-							y2: element.y
-						}
-					} else {
-						if (this.tempLink.target === null) {
-							let network = this.tempLink.network
-							let target = element
-							let newLink = {
-								gid: uuidv1(),
-								name: `${network.name}_${target.name}`,
-								type: 'NetworkLink',
-								network: network,
-								target: target,
-								ip: null
-							}
-							if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
-									this.links.push(newLink)
-									this.tempLink = null
-							}
-						}
-					}
+          if (this.tempLink === null){
+            this.tempLink = {
+              network: null,
+              target: element,
+              x1: element.x,
+              y1: element.y,
+              x2: element.x,
+              y2: element.y
+            }
+          } else {
+            if (this.tempLink.target === null) {
+              let network = this.tempLink.network
+              let target = element
+              let newLink = {
+                gid: uuidv1(),
+                name: `${network.name}_${target.name}`,
+                type: 'NetworkLink',
+                network: network,
+                target: target,
+                ip: null
+              }
+              if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
+                  this.links.push(newLink)
+                  this.tempLink = null
+              }
+            }
+          }
           break;
         }
       }
     },
 
     onInstanceClick: function(element) {
-			switch (this.currentTool) {
-				case 'select':
-        	this.selectedElement = element
-					break
-				case 'link':
-					if (this.tempLink === null){
-						this.tempLink = {
-							network: null,
-							target: element,
-							x1: element.x,
-							y1: element.y,
-							x2: element.x,
-							y2: element.y
-						}
-					} else {
-						if (this.tempLink.target === null) {
-							let network = this.tempLink.network
-							let target = element
-							let newLink = {
-								name: `${network.name}_${target.name}`,
-								gid: uuidv1(),
-								type: 'NetworkLink',
-								network: network,
-								target: target,
-								ip: null
-							}
-							if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
-									this.links.push(newLink)
-									this.tempLink = null
-							}
-						}
-					}
-				break
-			}
+      switch (this.currentTool) {
+        case 'select':
+          this.selectedElement = element;
+          this.selectionType = 'instance';
+          break;
+        case 'delete':
+          if (this.selectedElement === element || (this.selectionType === 'link'
+              && this.selectedElement.target.gid === element.gid)) {
+            this.selectedElement = null;
+            this.selectionType = '';
+          }
+          this.instances = this.instances.filter(instance => instance.gid !== element.gid);
+          this.links = this.links.filter(link => link.target.gid !== element.gid);
+          break;
+        case 'link':
+          if (this.tempLink === null){
+            this.tempLink = {
+              network: null,
+              target: element,
+              x1: element.x,
+              y1: element.y,
+              x2: element.x,
+              y2: element.y
+            }
+          } else {
+            if (this.tempLink.target === null) {
+              let network = this.tempLink.network
+              let target = element
+              let newLink = {
+                name: `${network.name}_${target.name}`,
+                gid: uuidv1(),
+                type: 'NetworkLink',
+                network: network,
+                target: target,
+                ip: null
+              }
+              if (this.links.find(el => el.network == network && el.target == target) === undefined) { // not duplicated link)
+                  this.links.push(newLink)
+                  this.tempLink = null
+              }
+            }
+          }
+        break
+      }
     },
 
     onLinkClick: function(element) {
-      if (this.currentTool == 'select') {
-				// Set selectedElement to the clicked link
-        this.selectedElement = element
+      switch (this.currentTool) {
+        case 'select':
+          this.selectionType = 'link';
+          this.selectedElement = element;
+          break;
+        case 'delete':
+          if (this.selectedElement === element) {
+            this.selectedElement = null;
+            this.selectionType = '';
+          }
+          this.links = this.links.filter(link => link.gid !== element.gid);
+          break;
       }
     },
 
-    validateInputs: function () {
-      let flag = true;
-      flag = flag && (this.nameValidated = (this.name.trim() !== ''));
-
-      this.sgRules.forEach(rule => {
-        const SG_RULE_PATTERN = /(ingress|egress)\s+(ipv4|ipv6)\s+([a-z]+)\s*(?:(\d+(?:-\d+)?)?(?:\s|$)+)?(?:((?:(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0-9A-Fa-f]{1,4}|:))|(?:(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){5}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){4}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,3})|(?:(?::[0-9A-Fa-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){3}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,4})|(?:(?::[0-9A-Fa-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){2}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,5})|(?:(?::[0-9A-Fa-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){1}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|(?:(?::[0-9A-Fa-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9A-Fa-f]{1,4}){1,7})|(?:(?::[0-9A-Fa-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?:\/[0-9]{1,2})?(\s|$)))*/;
-        rule.validated = SG_RULE_PATTERN.test(rule.value.trim());
-        flag = flag && rule.validated;
-      });
-
-      return flag;
+    updateLink(link) {
+      this.selectedElement.ip = link.ip;
+      this.selectedElement = null;
+      this.selectionType = '';
     },
 
-		/**
-		 * Event handler when publish btn is clicked
-		 */
-    onPublishBtn: function () {
-      if (!this.validateInputs()) {
-        return;
-      }
-      this.error = null
-      this.isPublishing = true
-			let topo = {
-				networks: this.networks,
-				instances: this.instances,
-				routers: this.routers,
-				links: this.links
-			}
-			let sgRules = this.sgRules.map(rule => rule.value.trim()).filter(rule => rule !== '');
-			if (this.isNewScenario) {
-				POSTscenario(this.name, this.description, sgRules, this.isPublic, topo, json => {
-					this.$router.push('/scenarios/')
-				})
-			} else {
-				PATCHscenario(this.name, this.description, sgRules, this.isPublic, topo, this.$route.params.id, json => {
-					this.$router.push('/scenarios/')
-				})
-			}
+    updateInstance(instance) {
+      this.selectedElement.name = instance.name;
+      this.selectedElement.image = instance.image;
+      this.selectedElement.flavor = instance.flavor;
+      this.selectedElement.configurations = instance.configurations;
+      this.selectedElement = null;
+      this.selectionType = '';
     },
 
-
-    onAddSgRule: function () {
-      let length = this.sgRules.length;
-    	if (length === 0 || this.sgRules[length - 1].value.trim() !== '') {
-      	this.sgRules.push({ value: '', validated: true });
-      }
+    updateRouter(router) {
+      this.selectedElement.name = router.name;
+      this.selectedElement.image = router.image;
+      this.selectedElement.flavor = router.flavor;
+      this.selectedElement.configurations = router.configurations;
+      this.selectedElement = null;
+      this.selectionType = '';
     },
 
-    onDeleteSgRule: function (rule) {
-    	let index = this.sgRules.indexOf(rule);
-      if (index > -1) {
-        this.sgRules.splice(index, 1);
-      }
+    updateNetwork(network) {
+      this.selectedElement.name = network.name;
+      this.selectedElement.cidr = network.cidr;
+      this.selectedElement = null;
+      this.selectionType = '';
+    },
+
+    updateScenarioMeta(scenario) {
+      this.meta = {
+        name: scenario.name,
+        description: scenario.description,
+        securityGroupRules: scenario.securityGroupRules,
+        isPublic: scenario.isPublic
+      };
+      this.selectedElement = null;
+      this.selectionType = '';
+    },
+
+    download() {
+      const element = document.createElement('a');
+      const json = JSON.stringify(this.topo);
+      const blob = new Blob([json], {type: "application/json"});
+
+      element.setAttribute('href', URL.createObjectURL(blob));
+      element.setAttribute('download', [this.meta.name, new Date().toISOString().slice(0, 10), 'export.json']
+        .filter(i => !!i.trim()).join("_"));
+      element.style.display = 'none';
+      document.body.appendChild(element);
+      element.click();
+
+      document.body.removeChild(element);
     }
   }
 }
 </script>
 
 <style scoped>
-.main {
-  margin-top: 20px;
-}
+  .main {
+    position: relative;
+  }
 
-.center {
-  width: 60%;
-  margin: auto;
-}
+  .panel-container {
+    position: relative;
+  }
 
-.property {
-  background-color: #f6f6f6;
-  margin-left: 5px;
-  margin-bottom: 5px;
-}
+  .workspace {
+    background-color: #f6f6f6;
+    border-radius: 5px;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
 
-.workspace {
-  background-color: #f6f6f6;
-  margin-bottom: 5px;
-  width: 800px;
-}
-
-.toolbox {
-  background-color: #f6f6f6;
-  margin-right: 5px;
-  margin-bottom: 5px;
-}
+  .message {
+    position: absolute;
+    z-index: 100;
+    top: 0;
+    right: 0;
+    max-width: 400px;
+  }
 </style>
