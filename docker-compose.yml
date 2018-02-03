@@ -17,7 +17,7 @@ services:
         volumes:
             - ./api:/src
         command: >
-            bash -c "pip install pipenv && pipenv --python 3.6 &&
+            bash -c "pip install pipenv && (pipenv --venv > /dev/null 2>&1 || pipenv --python 3.6) &&
             pipenv install && pipenv run python app.py"
         ports:
             - '5000:5000'
