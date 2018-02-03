@@ -95,7 +95,7 @@ Vagrant.configure("2") do |config|
         su postgres << EOT
             psql -c "CREATE ROLE ${POSTGRES_USER} WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';"
             createdb ${POSTGRES_USER}
-            cat api/database/migrations/*.sql | psql -d ${POSTGRES_USER}
+            cat api/database/migrations/*.sql | psql -q -d ${POSTGRES_USER}
             # Allow any host to connect to the postgresql
             sed -i "s/.*listen_addresses.*=.*/listen_addresses = '*'/" \\$(psql -c "SHOW config_file;" | grep postgresql.conf)
             echo -e "\\nhost all all 0.0.0.0/0 trust" | tee -a \\$(psql -c "SHOW hba_file;" | grep pg_hba.conf)
