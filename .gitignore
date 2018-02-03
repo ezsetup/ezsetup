@@ -260,3 +260,4 @@ fabric.properties
 
 !frontend/build
 .pytest_cache
+.pgdata

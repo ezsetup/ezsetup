@@ -1,0 +1,43 @@
+version: '2'
+
+services:
+    api:
+        image: python:3.6
+        working_dir: /src
+        environment:
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - POSTGRES_HOST
+            - POSTGRES_PORT
+            - POSTGRES_POOL_MIN_CONN
+            - POSTGRES_POOL_MAX_CONN
+            - REDIS_HOST
+            - REDIS_PORT
+            - REDIS_TOKEN_DB
+        volumes:
+            - ./api:/src
+        command: >
+            bash -c "pip install pipenv && pipenv --python 3.6 && pipenv install -d &&
+            pipenv run mypy --ignore-missing-imports app.py &&
+            pipenv run mypy --ignore-missing-imports tests &&
+            PYTHONPATH=. pipenv run pytest"
+        ports:
+            - '5000:5000'
+        depends_on:
+            - database
+            - cache
+    cache:
+        image: redis:3.2
+        ports:
+            - '${REDIS_PORT}:6379'
+    database:
+        image: postgres:9.6
+        ports:
+            - '${POSTGRES_PORT}:5432'
+        environment:
+            - POSTGRES_USER
+            - POSTGRES_PASSWORD
+            - PGDATA=/var/lib/postgresql/data/ezsetup
+        volumes:
+            # do not mount pgdata folder so that test database is not persistent
+            - ./api/database/migrations:/docker-entrypoint-initdb.d

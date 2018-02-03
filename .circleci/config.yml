@@ -14,8 +14,9 @@ jobs:
                   - REDIS_PORT: 6379
                   - REDIS_TOKEN_DB: 1
 
-            - image: nguyendv/ezsetup-pg-dev:latest
+            - image: circleci/postgres:9.6
               environment:
+                  - POSTGRES_DB: ezsetup
                   - POSTGRES_USER: ezsetup
                   - POSTGRES_PASSWORD: 123456
 
@@ -23,6 +24,9 @@ jobs:
 
         steps:
             - checkout
+            - run: | # init database
+                    sudo apt install postgresql-client
+                    cat api/database/migrations/*.sql | PGPASSWORD=123456 psql -h 127.0.0.1 -p 5432 -U ezsetup -d ezsetup
             - run: sudo pip install pipenv
             - run:
                 command: |
