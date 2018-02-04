@@ -1,14 +1,28 @@
 <template>
-  <div>
-    <div v-for="(scenario, index) in scenarios" v-bind:key="index" class="columns">
-      <div class="column is-2">
-        <span>{{index + 1}}.</span>
-        <span>{{scenario.name}}</span>
-      </div>
-      <p class="column is-4">{{scenario.description}}</p>
-      <router-link class="button is-info" :to="{name: 'ScenarioEditor', params: {id: scenario.id}}">Edit</router-link>
-    </div>
-  </div>
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Networks</th>
+        <th>Instances</th>
+        <th>Routers</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="(scenario, i) in scenarios" track-by="$index">
+        <td>{{ i + 1 }}</td>
+        <td><router-link :to="{ name: 'ScenarioEditor', params: { id: scenario.id } }">{{ scenario.name }}</router-link></td>
+        <td>{{ scenario.description }}</td>
+        <td>{{ scenario.topo.networks.length }}</td>
+        <td>{{ scenario.topo.instances.length }}</td>
+        <td>{{ scenario.topo.routers.length }}</td>
+        <td><router-link class="button is-small" :to="{ name: 'ScenarioEditor', params: { id: scenario.id } }">Edit</router-link></td>
+      </tr>
+    </tbody>
+  </table>
 </template>
 
 <script>

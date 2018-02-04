@@ -28,7 +28,8 @@ class Labs(FlaskView):
                 'id': l.id,
                 'name': l.name,
                 'description': l.description,
-                'status': l.status
+                'status': l.status,
+                'slices': len(Slice.fetchall(lab_id=l.id))
             })
         return jsonify(ret)
 

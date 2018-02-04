@@ -1,8 +1,18 @@
 <template>
   <div class="main">
-    <ScenariosListing></ScenariosListing>
-    <br>
-		<router-link :to="{name: 'NewScenario'}" class="button">New scenario</router-link>
+    <div class="columns">
+      <div class="column">
+        <h1 class="title">Scenarios</h1>
+      </div>
+      <div class="column is-narrow">
+		    <router-link :to="{ name: 'NewScenario' }" class="button is-success">Create Scenario</router-link>
+      </div>
+    </div>
+    <div class="columns">
+      <div class="column">
+        <ScenariosListing></ScenariosListing>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -10,14 +20,11 @@
   .main {
     margin-top: 20px;
   }
-  .center {
-    text-align: center;
-  }
-
 </style>
 
 <script>
   import ScenariosListing from '@/components/scenarios/ScenariosListing.vue'
+
   export default {
     name: 'ScenariosManagement',
     components: {
