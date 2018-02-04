@@ -66,6 +66,7 @@ class DeployThread(Thread):
                     _create_networks(cloudops, sl, topo)
                     _create_instances(cloudops, lab, sl, topo, sec_group_id)
                     _create_routers(cloudops, lab, sl, topo, sec_group_id)
+                    _update_allowed_address_pairs(cloudops, sl, topo)
                     sl.update(status='active')
             lab.update(status='active')
         except Exception as ex:
@@ -203,6 +204,38 @@ def _create_routers(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
         public_ip, attrs = cloudops.create_router(
                 router.name, nets, ips, router.configurations, sec_group_id, router.image, router.flavor)
         router.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
+
+
+def _update_allowed_address_pairs(cloudops: CloudOps, slice_: Slice, topo):
+    mac_regex = '^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$'
+    ip_cidr_regex = '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4]' \
+                    '[0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-' \
+                    'f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-' \
+                    '5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5' \
+                    ']|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}((' \
+                    '(:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0' \
+                    '-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]' \
+                    '{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0' \
+                    '-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d' \
+                    '|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1' \
+                    ',4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d' \
+                    '|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1' \
+                    '\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(\/[0-9]{1,2})*$'
+    for link in topo['links']:
+        address_pairs = []
+        network = NetworkNode.fetchone(gid=link['network']['gid'], slice_id=slice_.id)
+        if link['target']['type'].lower() == 'instance':
+            device = Instance.fetchone(gid=link['target']['gid'], slice_id=slice_.id)
+        elif link['target']['type'].lower() == 'router':
+            device = Router.fetchone(gid=link['target']['gid'], slice_id=slice_.id)
+        else:
+            continue
+        for raw_address_pair in (link['allowedAddressPairs'] or []):
+            mac_address, ip_address = raw_address_pair.split(',', 2)
+            if re.match(mac_regex, mac_address.strip()) and re.match(ip_cidr_regex, ip_address.strip()):
+                address_pairs.append({ 'ip_address': ip_address, 'mac_address': mac_address })
+        if address_pairs:
+            cloudops.update_allowed_address_pairs(network, device.cloud_attrs['id'], address_pairs)
 
 
 def _extract_links(instance: Dict[str, Any], topo: Dict[str, Any]) -> List:

@@ -17,7 +17,7 @@ def _get_scenarios_private_only():
             'sgRules': scenario.sg_rules,
             'topo': scenario.topo.value
         })
-    return jsonify(ret)
+    return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
 
 class Scenarios(FlaskView):
@@ -82,4 +82,4 @@ class Scenarios(FlaskView):
                 }
                 ret.append(r)
 
-            return jsonify(ret)
+            return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))

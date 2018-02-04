@@ -9,11 +9,33 @@
         </div>
         <p class="help is-danger" v-if="error.ip">{{ error.ip }}</p>
       </div>
+      <div class="field">
+        <label class="label">Allowed address pairs</label>
+        <div class="field" v-for="(pair, i) in allowedAddressPairs" track-by="$index">
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input class="input" type="text" v-model="pair.value" placeholder="e.g.: 1b:10:84:ff:c9:39,10.0.2.0/16">
+            </div>
+            <div class="control">
+              <button class="button is-danger" @click="deleteAllowedAddressPair(pair)">
+                <span class="icon">
+                  <i class="fa fa-trash-alt"></i>
+                </span>
+              </button>
+            </div>
+          </div>
+          <p class="help is-danger" v-if="error.allowedAddressPairs.hasOwnProperty(i)">
+            {{ error.allowedAddressPairs[i] }}
+          </p>
+        </div>
+        <button class="button is-primary" @click="addAllowedAddressPair">Add address pair</button>
+      </div>
     </div>
   </BasePanel>
 </template>
 
 <script>
+  import { IP_PATTERN, MAC_PATTERN, CIDR_PATTERN } from '@/common/index'
   import BasePanel from '@/components/scenarios/panels/BasePanel.vue'
 
   export default {
@@ -25,8 +47,10 @@
     data() {
       return {
         ip: null,
+        allowedAddressPairs: [],
         error: {
-          ip: ''
+          ip: '',
+          allowedAddressPairs: {}
         }
       }
     },
@@ -41,11 +65,33 @@
     methods: {
       update() {
         this.ip = this.link.ip;
+        this.allowedAddressPairs = Array.isArray(this.link.allowedAddressPairs) ?
+          this.link.allowedAddressPairs.map(pair => ({ value: pair })) : [];
+      },
+      addAllowedAddressPair() {
+        let length = this.allowedAddressPairs.length;
+        if (length === 0 || this.allowedAddressPairs[length - 1].value.trim() !== '') {
+          this.allowedAddressPairs.push({ value: '' });
+        }
+      },
+      deleteAllowedAddressPair(pair) {
+        let index = this.allowedAddressPairs.indexOf(pair);
+        if (index > -1) {
+          this.allowedAddressPairs.splice(index, 1);
+        }
       },
       validate() {
         let passed = true;
-        const IP_PATTERN = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))$/;
         !IP_PATTERN.test(this.ip) ? (this.error.ip = 'IP address is invalid', passed = false) : this.error.ip = '';
+
+        this.error.allowedAddressPairs = {};
+        this.allowedAddressPairs.forEach((pair, i) => {
+          const [ mac, ip ] = pair.value.trim().split(',');
+          if (!MAC_PATTERN.test(mac.trim()) || !(IP_PATTERN.test(ip.trim()) || CIDR_PATTERN.test(ip.trim()))) {
+            this.error.allowedAddressPairs[i] = 'Allowed address pair is invalid';
+            passed = false;
+          }
+        });
         return passed;
       },
       confirm() {
@@ -53,7 +99,8 @@
           return;
         }
         this.$emit('confirm', {
-          ip: this.ip
+          ip: this.ip,
+          allowedAddressPairs: this.allowedAddressPairs.map(pair => pair.value).filter(pair => pair !== ''),
         });
       }
     }

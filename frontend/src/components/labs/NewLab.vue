@@ -7,14 +7,14 @@
         <input class="input" v-model="name" placeholder="Lab name" />
       </p>
     </div>
-  
+
     <div class="field">
       <label for="description" class="label">Description</label>
       <p class="control">
         <textarea class="textarea" v-model="description" placeholder="Lab description"></textarea>
       </p>
     </div>
-  
+
     <div class="field">
       <label for="scenarioType" class="label">Scenario type</label>
       <p class="control">
@@ -23,10 +23,10 @@
             <option v-for="scenario in scenarios" :value="scenario.id" :key="scenario.id">{{scenario.name}}</option>
           </select>
         </span>
-        <a class="button is-secondary" href="#/designer">New scenario</a>
+		    <router-link :to="{ name: 'NewScenario' }" class="button is-success">Create Scenario</router-link>
       </p>
     </div>
-  
+
     <div class="field">
       <button v-if="isLoading" type="submit" v-on:click="onCreateBtn" class="button is-primary is-loading">CREATE</button>
       <button v-else type="submit" v-on:click="onCreateBtn" class="button is-primary">CREATE</button>

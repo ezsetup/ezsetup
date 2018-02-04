@@ -17,7 +17,7 @@
       </div>
       <div class="field">
         <label class="label">
-          Security Group Rules
+          Security group rules
           <span @click="securityGroupTip = true">
             <i class="far fa-question-circle"></i>
           </span>
@@ -39,7 +39,7 @@
             {{ error.securityGroupRules[i] }}
           </p>
         </div>
-        <button class="button is-primary" @click="addSecurityGroupRule">Add Rule</button>
+        <button class="button is-primary" @click="addSecurityGroupRule">Add rule</button>
       </div>
       <div class="field">
         <label class="label">Publicly available</label>
@@ -72,6 +72,7 @@
 </template>
 
 <script>
+  import { SECURITY_GROUP_RULE_PATTERN } from '@/common/index'
   import BasePanel from '@/components/scenarios/panels/BasePanel.vue'
 
   export default {
@@ -129,8 +130,7 @@
 
         this.error.securityGroupRules = {};
         this.securityGroupRules.forEach((rule, i) => {
-          const SG_RULE_PATTERN = /(ingress|egress)\s+(ipv4|ipv6)\s+([a-z]+)\s*(?:(\d+(?:-\d+)?)?(?:\s|$)+)?(?:((?:(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0-9A-Fa-f]{1,4}|:))|(?:(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa-f]{1,4}|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){5}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,2})|:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(?:(?:[0-9A-Fa-f]{1,4}:){4}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,3})|(?:(?::[0-9A-Fa-f]{1,4})?:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){3}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,4})|(?:(?::[0-9A-Fa-f]{1,4}){0,2}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){2}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,5})|(?:(?::[0-9A-Fa-f]{1,4}){0,3}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:(?:[0-9A-Fa-f]{1,4}:){1}(?:(?:(?::[0-9A-Fa-f]{1,4}){1,6})|(?:(?::[0-9A-Fa-f]{1,4}){0,4}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?::(?:(?:(?::[0-9A-Fa-f]{1,4}){1,7})|(?:(?::[0-9A-Fa-f]{1,4}){0,5}:(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))(?:\/[0-9]{1,2})?(\s|$)))*/;
-          !SG_RULE_PATTERN.test(rule.value.trim()) ? (this.error.securityGroupRules[i] = 'Security group rule format error', passed = false) : null;
+          !SECURITY_GROUP_RULE_PATTERN.test(rule.value.trim()) ? (this.error.securityGroupRules[i] = 'Security group rule format error', passed = false) : null;
         });
         return passed;
       },
@@ -141,7 +141,7 @@
         this.$emit('confirm', {
           name: this.name,
           description: this.description,
-          securityGroupRules: [...this.securityGroupRules],
+          securityGroupRules: this.securityGroupRules.map(rule => rule.value).filter(rule => rule !== ''),
           isPublic: this.isPublic,
         });
       }

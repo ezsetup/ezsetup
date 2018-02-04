@@ -254,7 +254,6 @@ export default {
           let button = this.publishTools.find(tool => tool.name === 'save');
           button.theme += ' is-loading';
           button.disabled = true;
-          let rules = this.meta.securityGroupRules.map(rule => rule.value.trim()).filter(rule => rule !== '');
           let onSuccess = () => this.$router.push('/scenarios/');
           let onFailed = json => {
             button.theme = 'is-success';
@@ -264,9 +263,9 @@ export default {
             }
           };
           if (this.isNewScenario) {
-            POSTscenario(this.meta.name, this.meta.description, rules, this.meta.isPublic, this.topo, onSuccess, onFailed);
+            POSTscenario(this.meta.name, this.meta.description, this.meta.securityGroupRules, this.meta.isPublic, this.topo, onSuccess, onFailed);
           } else {
-            PATCHscenario(this.meta.name, this.meta.description, rules, this.meta.isPublic, this.topo,
+            PATCHscenario(this.meta.name, this.meta.description, this.meta.securityGroupRules, this.meta.isPublic, this.topo,
               this.$route.params.id, onSuccess, onFailed);
           }
           break;
@@ -517,6 +516,7 @@ export default {
 
     updateLink(link) {
       this.selectedElement.ip = link.ip;
+      this.selectedElement.allowedAddressPairs = link.allowedAddressPairs;
       this.selectedElement = null;
       this.selectionType = '';
     },

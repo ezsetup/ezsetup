@@ -123,6 +123,10 @@ class CloudOps(object):
         if self.provider == CloudProvider.AWS:
             self.aws.delete_security_group(id)
 
+    def update_allowed_address_pairs(self, network, device_id, address_pairs):
+        if self.provider == CloudProvider.OPENSTACK:
+            self.openstack.update_allowed_address_pairs(network, device_id, address_pairs)
+
 
 class Openstack(object):
     def __init__(self, auth_url, project_name, username, password, keystone_version=None,
@@ -175,8 +179,8 @@ class Openstack(object):
 
         rules = conn.network.security_group_rules(security_group_id=security_group_id, **query)
         for rule in rules:
-            if rule.port_range_max == query['port_range_max'] and \
-                    rule.port_range_min == query['port_range_min']:
+            if rule.port_range_max == query.get('port_range_max', None) and \
+                    rule.port_range_min == query.get('port_range_min', None):
                 return rule.id
         rule = conn.network.create_security_group_rule(security_group_id=security_group_id, **query)
 
@@ -347,7 +351,6 @@ class Openstack(object):
         conn = self.conn
         image = conn.compute.find_image(image_name)
         # TODO: log error to log stream if image is None
-        print('image for router: ', image)
 
         flavor = self._find_flavor(ram=flavor_dict['ram'])
 
@@ -407,10 +410,20 @@ class Openstack(object):
             'provider': 'Openstack',
             'id': instance.id
         }
+
     def delete_instance(self, id):
         self.conn.compute.delete_server(id)
         while (self.conn.compute.find_server(id)) is not None:
             sleep(2)
+
+    def update_allowed_address_pairs(self, network, device_id, address_pairs):
+        conn = self.conn
+        ports = conn.network.ports(network_id=network.cloud_attrs['id'], device_id=device_id)
+        print(ports)
+        port = next(ports, None)
+        if port is not None:
+            return conn.network.update_port(port, allowed_address_pairs=[pair for pair in address_pairs])
+        return False
 
 
 class AWS(object):
