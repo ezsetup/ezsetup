@@ -13,7 +13,9 @@ def _get_scenarios_private_only():
         ret.append({
             'id': scenario.id,
             'name': scenario.name,
-            'description': scenario.description
+            'description': scenario.description,
+            'sgRules': scenario.sg_rules,
+            'topo': scenario.topo.value
         })
     return jsonify(ret)
 
