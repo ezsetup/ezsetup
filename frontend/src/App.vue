@@ -19,7 +19,4 @@
   #app {
     margin-top: 60px;
   }
-  th {
-    font-weight: 600;
-  }
 </style>

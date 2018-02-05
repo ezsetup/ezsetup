@@ -23,7 +23,7 @@
             <option v-for="scenario in scenarios" :value="scenario.id" :key="scenario.id">{{scenario.name}}</option>
           </select>
         </span>
-		    <router-link :to="{ name: 'NewScenario' }" class="button is-success">Create Scenario</router-link>
+		    <router-link :to="{ name: 'NewScenario' }" class="button">Create Scenario</router-link>
       </p>
     </div>
 

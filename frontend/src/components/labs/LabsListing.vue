@@ -18,10 +18,10 @@
         <td>{{ lab.slices }}</td>
         <td>
           <span v-if="lab.status === 'inactive'"><i class="fas fa-question-circle"></i> Not deployed</span>
-          <span v-if="lab.status === 'deploying'"><i class="fas fa-spinner"></i> Deploying</span>
+          <span v-if="lab.status === 'deploying'"><i class="fas fa-spinner fa-pulse"></i> Deploying</span>
           <span v-if="lab.status === 'deployfailed'"><i class="fas fa-times-circle has-text-danger"></i> Deploy failed</span>
           <span v-if="lab.status === 'active'"><i class="fas fa-check-circle has-text-success"></i> Active</span>
-          <span v-if="lab.status === 'destroying'"><i class="fas fa-spinner"></i> Destroying</span>
+          <span v-if="lab.status === 'destroying'"><i class="fas fa-spinner fa-pulse"></i> Destroying</span>
           <span v-if="lab.status === 'destroyfailed'"><i class="fas fa-times-circle has-text-danger"></i> Destroy failed</span>
         </td>
         <td><router-link class="button is-small" :to="{ name: 'Lab', params: { id: lab.id } }">Manage</router-link></td>
