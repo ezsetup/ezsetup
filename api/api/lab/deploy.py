@@ -230,7 +230,7 @@ def _update_allowed_address_pairs(cloudops: CloudOps, slice_: Slice, topo):
             device = Router.fetchone(gid=link['target']['gid'], slice_id=slice_.id)
         else:
             continue
-        for raw_address_pair in (link['allowedAddressPairs'] or []):
+        for raw_address_pair in link.get('allowedAddressPairs', []):
             mac_address, ip_address = raw_address_pair.split(',', 2)
             if re.match(mac_regex, mac_address.strip()) and re.match(ip_cidr_regex, ip_address.strip()):
                 address_pairs.append({ 'ip_address': ip_address, 'mac_address': mac_address })
