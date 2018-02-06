@@ -24,7 +24,7 @@ class Users(FlaskView):
                 'fullname': user.fullname,
                 'email': user.email
             })
-        return jsonify(ret)
+        return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
         return "Get user"

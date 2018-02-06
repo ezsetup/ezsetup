@@ -1,5 +1,5 @@
-redis_container=ezsetup_redis
-pg_container=ezsetup_pg
+include .env
+export $(shell sed -r 's/export\s*([^=]*).*/\1/' .env)
 
 install:
 	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install -d
@@ -9,16 +9,20 @@ install-production:
 	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install
 	cd frontend && npm install --production
 
-run-api: run-dockers
-	source .env && cd api && pipenv run python app.py &
+run-api:
+	cd api && pipenv run python app.py >> ../api-server.log 2>&1 &
 
 run-frontend:
-	cd frontend && npm run dev
+	cd frontend && npm run dev >> ../frontend.log 2>&1 &
 
-run-dockers:
-	[[ $$(docker ps -f "name=${redis_container}" --format '{{.Names}}') == ${redis_container} ]] || \
-	docker run --name ${redis_container} --restart=unless-stopped -d -p ${REDIS_PORT}:6379 redis:3.2
+test:
+	cd api && pipenv run mypy --ignore-missing-imports app.py
+	cd api && pipenv run mypy --ignore-missing-imports tests
+	cd api && PYTHONPATH=. pipenv run pytest
 
-	[[ $$(docker ps -f "name=${pg_container}" --format '{{.Names}}') == ${pg_container} ]] || \
-	docker run -d -p ${POSTGRES_PORT}:5432 --name ${pg_container} --restart=unless-stopped -e POSTGRES_USER=${POSTGRES_USER} -e POSTGRES_PASSWORD=${POSTGRES_PASSWORD} -e PGDATA=${PGDATA} -v $(CURDIR)/pgdata:${PGDATA} registry.gitlab.com/promises/pg:${PG_IMAGE_VERSION}
+db-shell:
+	PGPASSWORD=${POSTGRES_PASSWORD} psql -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} -w
 
+db-dump:
+	PGPASSWORD=${POSTGRES_PASSWORD} pg_dump -U ${POSTGRES_USER} -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} \
+	-d ${POSTGRES_USER}

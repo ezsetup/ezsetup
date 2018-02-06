@@ -30,6 +30,7 @@ Vagrant.configure("2") do |config|
     # via 127.0.0.1 to disable public access
     config.vm.network "forwarded_port", guest: 5000, host: 5000
     config.vm.network "forwarded_port", guest: 8080, host: 8080
+    config.vm.network "forwarded_port", guest: 5432, host: 5432
 
     # Create a private network, which allows host-only access to the machine
     # using a specific IP.
@@ -93,19 +94,20 @@ Vagrant.configure("2") do |config|
         # set up database
         su postgres << EOT
             psql -c "CREATE ROLE ${POSTGRES_USER} WITH SUPERUSER CREATEDB CREATEROLE LOGIN ENCRYPTED PASSWORD '${POSTGRES_PASSWORD}';"
-            createdb $POSTGRES_USER
-            psql -d $POSTGRES_USER -f /vagrant/api/init.sql
+            createdb ${POSTGRES_USER}
+            cat /vagrant/api/database/migrations/*.sql | psql -q -d ${POSTGRES_USER}
+            # Allow any host to connect to the postgresql
+            sed -i "s/.*listen_addresses.*=.*/listen_addresses = '*'/" \\$(psql -c "SHOW config_file;" | grep postgresql.conf)
+            echo -e "\\nhost all all 0.0.0.0/0 trust" | tee -a \\$(psql -c "SHOW hba_file;" | grep pg_hba.conf)
 EOT
+        systemctl restart postgresql*
 
 
         # Set up API server and frontend server
         su vagrant << EOT
             cd /vagrant/api
-            pipenv --python python3.6
-            pipenv install
-
-            # create ezsetup root user
-            echo -e "from manage import create_root\\ncreate_root('${EZ_ROOT_EMAIL}', '${EZ_ROOT_PASSWORD}', 'Admin')" | pipenv run python
+            pipenv --venv > /dev/null 2>&1 || pipenv --python python3.6
+            pipenv install -d
 
             cd /vagrant/frontend
             npm install
@@ -119,7 +121,5 @@ EOT
             cd /vagrant/frontend
             npm run dev >> /vagrant/frontend.log 2>&1 &
 EOT
-        echo "[INFO] ezsetup login email: ${EZ_ROOT_EMAIL}, password: ${EZ_ROOT_PASSWORD}"
-        echo "[INFO] postgresql root username: ${POSTGRES_USER}, password: ${POSTGRES_PASSWORD}"
     SHELL
 end

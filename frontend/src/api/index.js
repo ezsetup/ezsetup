@@ -132,46 +132,48 @@ function GETscenario (id, jsonOkCallback) {
     })
 }
 
-function POSTscenario (name, description, isPublic, topo, jsonOkCallback) {
+function POSTscenario (name, description, sgRules, isPublic, topo, onSuccess, onFailed) {
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
       name: name,
       description: description,
+      sgRules: sgRules,
       isPublic: isPublic,
       topo: topo
     })
   }
 
-  fetch(API_SERVER + '/api/scenarios/', options)
-    .then(response => {
-      if (response.ok) {
-        response.json()
-          .then(jsonOkCallback)
-      }
-    })
+  fetch(API_SERVER + '/api/scenarios/', options).then(response => {
+    if (response.ok) {
+      response.json().then(onSuccess)
+    } else {
+      response.json().then(onFailed)
+    }
+  })
 }
 
-function PATCHscenario (name, description, isPublic, topo, id, jsonOkCallback) {
+function PATCHscenario (name, description, sgRules, isPublic, topo, id, onSuccess, onFailed) {
   let options = {
     headers: authHeaders(),
     method: 'PATCH',
     body: JSON.stringify({
       name: name,
       description: description,
+      sgRules: sgRules,
       isPublic: isPublic,
       topo: topo
     })
   }
 
-  fetch(API_SERVER + '/api/scenarios/' + id + '/', options)
-    .then(response => {
-      if (response.ok) {
-        response.json()
-          .then(jsonOkCallback)
-      }
-    })
+  fetch(API_SERVER + '/api/scenarios/' + id + '/', options).then(response => {
+    if (response.ok) {
+      response.json().then(onSuccess)
+    } else {
+      response.json().then(onFailed)
+    }
+  })
 }
 
 function GETlab (labId, jsonOkCallback) {

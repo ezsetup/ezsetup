@@ -259,3 +259,5 @@ fabric.properties
 # *.logs
 
 !frontend/build
+.pytest_cache
+.pgdata

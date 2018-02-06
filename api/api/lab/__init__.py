@@ -28,9 +28,10 @@ class Labs(FlaskView):
                 'id': l.id,
                 'name': l.name,
                 'description': l.description,
-                'status': l.status
+                'status': l.status,
+                'slices': len(Slice.fetchall(lab_id=l.id))
             })
-        return jsonify(ret)
+        return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
         lab = Lab.fetchone(id=id)

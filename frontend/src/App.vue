@@ -16,21 +16,7 @@
 </script>
 
 <style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #222222;
-  margin-top: 60px;
-}
+  #app {
+    margin-top: 60px;
+  }
 </style>
-
-<style scoped>
-  .my-nav{
-    margin: 200px;
-  }
-
-  .ffff {
-    margin-top: 200px;
-  }
-</style

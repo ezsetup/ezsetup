@@ -57,6 +57,7 @@ const router = new Router({
         },
         {
           path: 'users/new',
+          name: 'NewUser',
           component: UserCreation,
           meta: {
             authRequired: true

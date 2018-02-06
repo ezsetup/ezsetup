@@ -110,4 +110,4 @@ class Slices(FlaskView):
                 'id': sl.id,
                 'labName': lab.name
             })
-        return jsonify(ret)
+        return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
