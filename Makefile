@@ -1,5 +1,5 @@
 include .env
-export $(shell sed -r 's/export\s*([^=]*).*/\1/' .env)
+export
 
 install:
 	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install -d
