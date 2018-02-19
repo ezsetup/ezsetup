@@ -26,6 +26,16 @@ services:
             - database
             - cache
         restart: unless-stopped
+        network_mode: "host"
+        extra_hosts:
+            - 'controller.nova.maas:172.16.0.7'
+            - 'api.neutron.maas:172.16.0.10'
+            - 'cinder.maas:172.16.0.255'
+            - 'glance.maas:172.16.1.0'
+            - 'heat.maas:172.16.1.1'
+            - 'swift.maas:172.16.0.9'
+            - 'keystone.maas:172.16.0.6'
+            - 'horizon.maas:172.16.0.8'
     frontend:
         image: node:8
         working_dir: /src
