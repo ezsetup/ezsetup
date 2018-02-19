@@ -1,5 +1,5 @@
 <template>
-  <div class="main">
+  <div>
     <div class="columns">
       <div class="column">
         <h1 class="title">Labs</h1>
@@ -15,12 +15,6 @@
     </div>
   </div>
 </template>
-
-<style scoped>
-  .main {
-    margin-top: 20px;
-  }
-</style>
 
 <script>
   import LabsListing from '@/components/labs/LabsListing.vue'

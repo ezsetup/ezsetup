@@ -1,6 +1,7 @@
 from flask import jsonify, g
 from flask_classful import FlaskView
 
+from auth.models import User
 from auth.decorators import login_required
 from models import Slice, Instance, Router, NetworkNode, Lab
 from api import permission_required
@@ -88,10 +89,12 @@ class Slices(FlaskView):
                         'network': link['network'],
                         'target': link['target'],
                         'type': 'NetworkLink'
-                    }) 
+                    })
+        user = User.fetchone(id=sl.user_id)
         return jsonify({
             'status': sl.status,
             'name': sl.name,
+            'username': user.fullname,
             'networks': networks,
             'instances': instances,
             'routers': routers,
@@ -108,6 +111,10 @@ class Slices(FlaskView):
             lab = Lab.fetchone(id=sl.lab_id)
             ret.append({
                 'id': sl.id,
-                'labName': lab.name
+                'status': sl.status,
+                'lab': {
+                    'name': lab.name,
+                    'description': lab.description,
+                }
             })
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))

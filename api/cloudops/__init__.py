@@ -315,7 +315,7 @@ class Openstack(object):
                       for net, ip in zip(networks, ips)]
         )
 
-        instance = conn.compute.wait_for_server(instance)
+        instance = conn.compute.wait_for_server(instance, wait=240)
 
         """ Remove instance from the default security groups, then add instance to the correct security group
             WHY? the openstacksdk always add new instances to 'default' security group, 

@@ -10,25 +10,13 @@
         <slot name="body">Panel Content</slot>
       </div>
     </div>
-    <footer class="card-footer">
-      <a class="card-footer-item" @click="confirm">Save</a>
-      <a class="card-footer-item cancel" @click="cancel">Cancel</a>
-    </footer>
   </div>
 </template>
 
 <script>
-  export default {
-    name: "BasePanel",
-    methods: {
-      confirm() {
-        this.$emit('confirm');
-      },
-      cancel() {
-        this.$emit('cancel');
-      }
+    export default {
+        name: "BasePanel"
     }
-  }
 </script>
 
 <style scoped>
@@ -46,9 +34,5 @@
   .card-content {
     max-height: 570px;
     overflow-y: auto;
-  }
-
-  .cancel {
-    color: #363636;
   }
 </style>
