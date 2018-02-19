@@ -14,13 +14,14 @@ services:
             - REDIS_HOST
             - REDIS_PORT
             - REDIS_TOKEN_DB
+            - SENTRY_DSN
         volumes:
             - ./api:/src
         command: >
             bash -c "pip install pipenv && (pipenv --venv > /dev/null 2>&1 || pipenv --python 3.6) &&
             pipenv install && pipenv run python app.py"
         ports:
-            - '5000:5000'
+            - '5002:5000'
         depends_on:
             - database
             - cache
@@ -32,7 +33,7 @@ services:
           - ./frontend:/src
         command: bash -c "npm install && npm run dev"
         ports:
-            - '8080:8080'
+            - '80:8080'
         depends_on:
           - api
         restart: unless-stopped
