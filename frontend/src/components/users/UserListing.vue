@@ -33,13 +33,3 @@ export default {
   }
 }
 </script>
-<style scoped>
-.main {
-  margin-top: 20px;
-}
-
-.center {
-  width: 60%;
-  margin: auto;
-}
-</style>

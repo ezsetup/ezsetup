@@ -1,37 +1,27 @@
 <template>
-  <div class="main">
-    <div class="center">
-      <h4 class="title">Deployment</h4>
-      <div class="field">
-        <label class="label">Add users</label>
-        <div v-for="(user, index) in users" :key="index" class="columns is-7">
-          <p class="column is-1">{{index + 1}}</p>
-          <p class="column is-5">{{user.fullname}}</p>
-          <p class="column is-5">{{user.email}}</p>
+  <div>
+    <div class="columns">
+      <div class="column is-8 is-offset-2">
+        <h4 class="title">Deploy {{ name }}</h4>
+
+        <div class="field">
+          <label class="label">Assign to</label>
+          <multiselect v-model="users" :options="userOptions" :multiple="true" placeholder="Select users" label="fullname" track-by="fullname">
+            <template slot="tag" slot-scope="props">
+              <span class="tag is-primary">
+                {{ props.option.fullname }}
+                <button class="delete is-small" @keydown.enter.prevent="props.remove(option)"  @mousedown.prevent="props.remove(props.option)"></button>
+              </span>
+            </template>
+            <template slot="option" slot-scope="props">
+              <div class="option__desc">
+                <span class="option__title">{{ props.option.fullname }}</span>&nbsp;
+                <span class="option__small">({{ props.option.email }})</span>
+              </div>
+            </template>
+          </multiselect>
         </div>
-        <div class="field has-addons">
-          <p class="control">
-            <input class="input" type="text" placeholder="Find a user" 
-              v-model="searchTerm" @keypress.enter="searchUser"
-              @keypress.esc="()=>{searchResults = []}" >
-          </p>
-          <p class="control"
-            <button class="button is-info" @click="searchUser">
-              Search
-            </button>
-          </p>
-        </div>
-        <div v-if="searchResults.length > 0" class="box column is-7">
-        <div v-for="user in addableUsers" :key="user.id" class="columns">
-          <p class="column is-5">{{user.fullname}}</p>
-          <p class="column is-5">{{user.email}}</p>
-          <div class="column is-2">
-            <button @click="addUser(user)" class="button is-small">Add</button>
-            </div>
-        </div>
-        </div>
-        <hr>
-  
+
         <div class="field">
           <label for="cloudProvider" class="label">Cloud provider</label>
           <p class="control">
@@ -43,8 +33,8 @@
             </span>
           </p>
         </div>
-  
-        <div v-if="cloudProvider === 'Openstack'">
+
+        <div class="field" v-if="cloudProvider === 'Openstack'">
           <div class="field">
             <label for="openstackAuthURL" class="label">Auth URL</label>
             <p class="control">
@@ -52,16 +42,21 @@
             </p>
           </div>
           <div class="field">
-            <label for="openstackUser" class="label">User</label>
-            <p class="control">
-              <input class="input" v-model="openstackUser" id="openstackUser" name="openstackUser" placeholder="Openstack username">
-            </p>
-          </div>
-          <div class="field">
-            <label for="openstackPassword" class="label">Password</label>
-            <p class="control">
-              <input class="input" v-model="openstackPassword" type="password" id="openstackPassword" name="openstackPassword" placeholder="Openstack password">
-            </p>
+            <label class="label">Credentials</label>
+            <div class="field is-horizontal">
+              <div class="field-body">
+                <div class="field">
+                  <p class="control">
+                    <input class="input" v-model="openstackUser" id="openstackUser" name="openstackUser" placeholder="Openstack username">
+                  </p>
+                </div>
+                <div class="field">
+                  <p class="control">
+                    <input class="input" v-model="openstackPassword" type="password" id="openstackPassword" name="openstackPassword" placeholder="Openstack password">
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="field">
             <label for="openstackProject" class="label">Project</label>
@@ -70,8 +65,8 @@
             </p>
           </div>
         </div>
-  
-        <div v-else-if="cloudProvider === 'AWS'">
+
+        <div class="field" v-else-if="cloudProvider === 'AWS'">
           <div class="field">
             <label for="awsAccessKeyId" class="label">Access Key ID</label>
             <p class="control">
@@ -95,11 +90,12 @@
             </p>
           </div>
         </div>
-  
-        <br>
+
         <div class="field">
-          <button v-if="state !== null" type="submit" class="button is-primary is-loading"></button>
-          <button v-else type="submit" v-on:click="onDeployBtn" class="button is-primary">{{buttonTitle}}</button>
+          <p class="control">
+            <button v-if="state !== null" type="submit" class="button is-primary is-loading"></button>
+            <button v-else type="submit" v-on:click="onDeployBtn" class="button is-primary">{{buttonTitle}}</button>
+          </p>
           <p v-if="error" class="help is-danger">{{error}}</p>
         </div>
       </div>
@@ -107,17 +103,28 @@
   </div>
 </template>
 
+<style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
+<style scoped>
+  .multiselect__tags .tag {
+    margin-right: 8px;
+  }
+</style>
 
 <script>
-  import {POSTcloudconfig, DEPLOYlab, SEARCHuser} from '@/api'
+  import Multiselect from 'vue-multiselect'
+  import { POSTcloudconfig, DEPLOYlab, LISTusers } from '@/api'
+
   const State = Object.freeze({
     UPLOADING: 'Uploading cloud config',
     DEPLOYING: 'Deploying'
   })
   export default {
     name: 'LabDeployment',
+    props: [ 'name' ],
+    components: { Multiselect },
     data: function () {
       return {
+        lab: null,
         cloudConfigId: null,
         cloudProvider: 'Openstack',
         openstackAuthURL: 'http://keystone.maas:5000/v2.0', // TODO: change me to null
@@ -130,8 +137,7 @@
         error: null,
         state: null,
         users: [],
-        searchTerm: null,
-        searchResults: []
+        userOptions: []
       }
     },
     computed: {
@@ -139,12 +145,12 @@
         if (this.state === null) {
           return 'DEPLOY'
         }
-      },
-      addableUsers: function () {
-        return this.searchResults.filter( (element) =>
-          !this.users.map(user=>user.id).includes(element.id)
-        )
       }
+    },
+    created: function () {
+      LISTusers(json => {
+        this.userOptions = json
+      })
     },
     methods: {
       onDeployBtn: function () {
@@ -172,7 +178,7 @@
             break
         }
 
-        POSTcloudconfig(cloudDetail, this.cloudProvider, this.$route.params.id, 
+        POSTcloudconfig(cloudDetail, this.cloudProvider, this.$route.params.id,
           json => {
             this.cloudConfigId = json.id
             this.deployLab()
@@ -193,39 +199,7 @@
             this.$emit('deploying')
           })
         }
-      },
-      searchUser: function () {
-        SEARCHuser(this.searchTerm, json => {
-          this.searchResults = json
-        })
-      },
-      addUser: function(user) {
-        this.users.push(user)
       }
     }
   }
 </script>
-
-<style scoped>
-  .main {
-    margin-top: 20px;
-  }
-
-  .property {
-    background-color: #f6f6f6;
-    margin-left: 5px;
-    margin-bottom: 5px;
-  }
-
-  .workspace {
-    background-color: #f6f6f6;
-    margin-bottom: 5px;
-    width: 800px;
-  }
-
-  .center {
-    width: 60%;
-    margin: auto;
-  }
-
-</style>

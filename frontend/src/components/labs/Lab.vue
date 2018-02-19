@@ -1,6 +1,6 @@
 <template>
   <div>
-    <LabDeployment v-if="status==='inactive'" @deploying="onStartDeploying"></LabDeployment>
+    <LabDeployment v-if="status==='inactive'" @deploying="onStartDeploying" :name="name"></LabDeployment>
     <LabViewer v-else-if="status!=='inactive'" @destroying="onStartDestroying" :name="name" :slices="slices" :status="status"></LabViewer>
   </div>
 </template>
