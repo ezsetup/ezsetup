@@ -4,22 +4,22 @@
       <filter :id="`instanceSofGlow${el.gid}`" height="300%" width="300%" x="-75%" y="-75%">
         <!-- Thicken out the original shape -->
         <feMorphology operator="dilate" radius="2" in="SourceAlpha" result="thicken" />
-  
+
         <!-- Use a gaussian blur to create the soft blurriness of the glow -->
-        <feGaussianBlur in="thicken" stdDeviation="50" result="blurred" />
-  
+        <feGaussianBlur in="thicken" stdDeviation="5" result="blurred" />
+
         <!-- Change the colour -->
         <feFlood flood-color="rgb(64,224,208)" result="glowColor" />
-  
+
         <!-- Color in the glows -->
         <feComposite in="glowColor" in2="blurred" operator="in" result="softGlow_colored" />
-  
+
         <!--	Layer the effects together -->
         <feMerge>
           <feMergeNode in="softGlow_colored" />
           <feMergeNode in="SourceGraphic" />
         </feMerge>
-  
+
       </filter>
     </defs>
     <text :x="el.x" :y="el.y-30" text-anchor="middle" font-size="14">{{el.name}}</text>
@@ -71,7 +71,7 @@
           return "fill:rgb(115,115,115);"
         } else {
           return null
-        } 
+        }
       }
     },
     methods: {

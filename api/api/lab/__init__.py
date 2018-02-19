@@ -2,6 +2,7 @@ from flask import request, jsonify, g
 from flask_classful import FlaskView, route
 
 from models import Lab, Slice
+from auth.models import User
 from api import permission_required
 from auth.decorators import login_required
 
@@ -46,10 +47,12 @@ class Labs(FlaskView):
         else:
             slices = []
             for sl in Slice.fetchall(lab_id=lab.id):
+                user = User.fetchone(id=sl.user_id)
                 slices.append({
                     'id': sl.id,
                     'name': sl.name,
-                    'status': sl.status
+                    'status': sl.status,
+                    'username': user.fullname
                 })
             return jsonify({
                 'id': lab.id,
