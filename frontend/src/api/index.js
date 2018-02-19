@@ -1,9 +1,6 @@
 import store from '@/store'
 
-let API_SERVER = 'http://localhost:5000'
-if (process.env.NODE_ENV === 'production') {
-  API_SERVER = 'http://172.16.100.4:5002'
-}
+let API_SERVER = typeof process.env.API_SERVER === 'undefined' ? 'http://127.0.0.1:5000' : process.env.API_SERVER
 
 function authHeaders () {
   return {
@@ -307,6 +304,8 @@ function LISTFlavors (jsonOkCallback) {
 }
 
 export {
+  API_SERVER,
+
   login,
   GETUserSelf,
   LISTusers,
@@ -333,5 +332,4 @@ export {
   LISTRouterConfigurations,
 
   LISTFlavors
-
 }

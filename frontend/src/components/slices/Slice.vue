@@ -45,12 +45,7 @@
 </style>
 
 <script>
-  import {
-    optionsGET
-  } from '@/common'
-  import {
-    API_SERVER
-  } from '@/config'
+  import { GETslice } from '@/api'
   import Instance from '@/components/networkelements/Instance.vue'
   import Router from '@/components/networkelements/Router.vue'
   import NetworkNode from '@/components/networkelements/Network.vue'
@@ -86,30 +81,21 @@
     },
     methods: {
       pollSlice: function () {
-        let options = optionsGET()
-        fetch(API_SERVER + '/api/slices/' + this.sliceId + '/', options)
-          .then(response => {
-            if (response.ok) {
-              response.json().then(json => {
-                this.status = json.status
-                this.name = json.name
-                this.elements = {
-                  instances: json.instances,
-									routers: json.routers,
-                  networks: json.networks,
-                  links: json.links
-                }
-                if (this.status === 'deploying') {
-                  setTimeout(() => {
-                    this.pollSlice()
-                  }, this.pollingTimeout)
-                }
-              })
-            }
-          })
-          .catch(err => {
-            console.log(err)
-          })
+        GETslice(this.sliceId, json => {
+          this.status = json.status
+          this.name = json.name
+          this.elements = {
+            instances: json.instances,
+            routers: json.routers,
+            networks: json.networks,
+            links: json.links
+          }
+          if (this.status === 'deploying') {
+            setTimeout(() => {
+              this.pollSlice()
+            }, this.pollingTimeout)
+          }
+        })
       },
       onComponentClick: function (element) {
         this.currentElement = element

@@ -83,9 +83,7 @@ Vagrant.configure("2") do |config|
             cd /vagrant
             sed 's/\r$//' .env.example > .env # Change CRLF to LF and copy file
             POSTGRES_PASSWORD=$(echo $RANDOM | sha256sum | base64 | head -c 32 ; echo)
-            EZ_ROOT_PASSWORD=$(echo $RANDOM | sha256sum | base64 | head -c 32 ; echo)
             sed -i "s/POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=${POSTGRES_PASSWORD}/" .env
-            sed -i "s/EZ_ROOT_PASSWORD=.*/EZ_ROOT_PASSWORD=${EZ_ROOT_PASSWORD}/" .env
             sed -i "s/SENTRY_DSN=.*/SENTRY_DSN=/" .env
         fi
 
