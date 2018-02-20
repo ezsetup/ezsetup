@@ -43,7 +43,7 @@
 </template>
 
 <script>
-  import {API_SERVER} from '@/config'
+  import {API_SERVER} from '@/api'
   import Cookies from 'js-cookie'
   export default {
     name: 'signup',

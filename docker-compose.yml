@@ -1,10 +1,17 @@
 version: '2'
 
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
+
 services:
     api:
         image: python:3.6
         working_dir: /src
         environment:
+            - PIPENV_VENV_IN_PROJECT=true
             - POSTGRES_USER
             - POSTGRES_PASSWORD
             - POSTGRES_HOST
@@ -14,25 +21,37 @@ services:
             - REDIS_HOST
             - REDIS_PORT
             - REDIS_TOKEN_DB
+            - SENTRY_DSN
         volumes:
             - ./api:/src
         command: >
             bash -c "pip install pipenv && (pipenv --venv > /dev/null 2>&1 || pipenv --python 3.6) &&
             pipenv install && pipenv run python app.py"
         ports:
-            - '5000:5000'
+            - '5002:5000'
         depends_on:
             - database
             - cache
         restart: unless-stopped
+        extra_hosts:
+            - 'controller.nova.maas:172.16.0.7'
+            - 'api.neutron.maas:172.16.0.10'
+            - 'cinder.maas:172.16.0.255'
+            - 'glance.maas:172.16.1.0'
+            - 'heat.maas:172.16.1.1'
+            - 'swift.maas:172.16.0.9'
+            - 'keystone.maas:172.16.0.6'
+            - 'horizon.maas:172.16.0.8'
     frontend:
         image: node:8
         working_dir: /src
+        environment:
+            - API_SERVER
         volumes:
           - ./frontend:/src
         command: bash -c "npm install && npm run dev"
         ports:
-            - '8080:8080'
+            - '80:8080'
         depends_on:
           - api
         restart: unless-stopped

@@ -2,7 +2,7 @@
   <div class="main">
     <div class="columns">
       <div class="column">
-        <h2 class="title">{{ meta.name }}</h2>
+        <h1 class="title">{{ meta.name }}</h1>
       </div>
     </div>
 
