@@ -5,6 +5,7 @@ services:
         image: python:3.6
         working_dir: /src
         environment:
+            - PIPENV_VENV_IN_PROJECT=true
             - POSTGRES_USER
             - POSTGRES_PASSWORD
             - POSTGRES_HOST
