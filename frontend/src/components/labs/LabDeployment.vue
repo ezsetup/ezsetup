@@ -6,7 +6,9 @@
 
         <div class="field">
           <label class="label">Assign to</label>
-          <multiselect v-model="users" :options="userOptions" :multiple="true" placeholder="Select users" label="fullname" track-by="fullname">
+          <multiselect v-model="users" :options="userOptions" :multiple="true" placeholder="Select users"
+                       label="fullname" track-by="email" :loading="isSearching" :internal-search="false"
+                       @search-change="searchUser">
             <template slot="tag" slot-scope="props">
               <span class="tag is-primary">
                 {{ props.option.fullname }}
@@ -112,12 +114,13 @@
 
 <script>
   import Multiselect from 'vue-multiselect'
-  import { POSTcloudconfig, DEPLOYlab, LISTusers } from '@/api'
+  import { POSTcloudconfig, DEPLOYlab, SEARCHuser } from '@/api'
 
   const State = Object.freeze({
     UPLOADING: 'Uploading cloud config',
     DEPLOYING: 'Deploying'
   })
+
   export default {
     name: 'LabDeployment',
     props: [ 'name' ],
@@ -137,7 +140,9 @@
         error: null,
         state: null,
         users: [],
-        userOptions: []
+        userOptions: [],
+        isSearching: false,
+        debounceTimer: null
       }
     },
     computed: {
@@ -147,12 +152,20 @@
         }
       }
     },
-    created: function () {
-      LISTusers(json => {
-        this.userOptions = json
-      })
-    },
     methods: {
+      searchUser: function (query) {
+        if (query.trim() === '') {
+          return
+        }
+        this.isLoading = true
+        clearTimeout(this.debounceTimer)
+        this.debounceTimer = setTimeout(() => {
+          SEARCHuser(query, json => {
+            this.userOptions = json
+            this.isLoading = false
+          })
+        }, 300)
+      },
       onDeployBtn: function () {
         this.error = null
         this.postCloudConfig()
