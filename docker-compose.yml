@@ -1,10 +1,17 @@
 version: '2'
 
+networks:
+  default:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1400
+
 services:
     api:
         image: python:3.6
         working_dir: /src
         environment:
+            - PIPENV_VENV_IN_PROJECT=true
             - POSTGRES_USER
             - POSTGRES_PASSWORD
             - POSTGRES_HOST
@@ -26,7 +33,6 @@ services:
             - database
             - cache
         restart: unless-stopped
-        network_mode: "host"
         extra_hosts:
             - 'controller.nova.maas:172.16.0.7'
             - 'api.neutron.maas:172.16.0.10'
