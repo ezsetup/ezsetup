@@ -261,3 +261,11 @@ fabric.properties
 !frontend/build
 .pytest_cache
 .pgdata
+
+archive/
+deployment/
+paper/
+ezsetup.TODO
+ezsetup.todo.txt
+frontend/.nvim/
+presentations

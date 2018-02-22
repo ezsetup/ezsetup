@@ -1,0 +1,190 @@
+{
+    "networks": [
+        {
+            "cidr": "10.0.0.0/24",
+            "gid": "08b6efa0-ff2c-11e7-8837-b5cf0c12eae1",
+            "name": "internal network",
+            "type": "NetworkNode",
+            "x": 451.34375,
+            "y": 223
+        },
+        {
+            "cidr": "10.0.1.0/24",
+            "gid": "f181e520-079a-11e8-98f4-5ba75b1e51a5",
+            "name": "test network",
+            "type": "NetworkNode",
+            "x": 672.515625,
+            "y": 211
+        }
+    ],
+    "instances": [
+        {
+            "configurations": [
+                "Enable password authentication",
+                "noVNC"
+            ],
+            "flavor": {
+                "name": "Large",
+                "ram": 4096
+            },
+            "gid": "0a5a8d80-ff2c-11e7-8837-b5cf0c12eae1",
+            "image": "sdn-controller",
+            "name": "SDN Controller",
+            "status": null,
+            "type": "Instance",
+            "x": 173.34375,
+            "y": 341
+        },
+        {
+            "configurations": [
+                "Enable password authentication",
+                "noVNC"
+            ],
+            "flavor": {
+                "name": "Large",
+                "ram": 4096
+            },
+            "gid": "0d48fae0-ff2c-11e7-8837-b5cf0c12eae1",
+            "image": "mininet-vm",
+            "name": "mininet-vm",
+            "status": null,
+            "type": "Instance",
+            "x": 597.34375,
+            "y": 337
+        }
+    ],
+    "routers": [
+        {
+            "flavor": {
+                "name": "Large",
+                "ram": 4096
+            },
+            "configurations": [],
+            "gid": "060eb300-ff2c-11e7-8837-b5cf0c12eae1",
+            "name": "Router0",
+            "status": null,
+            "type": "Router",
+            "x": 411.34375,
+            "y": 87,
+            "image": "Ubuntu 16.04 x64"
+        }
+    ],
+    "links": [
+        {
+            "gid": "0eb4bfe0-ff2c-11e7-8837-b5cf0c12eae1",
+            "ip": "10.0.1.10",
+            "name": "Network0_Router0",
+            "network": {
+                "cidr": "10.0.0.0/24",
+                "gid": "08b6efa0-ff2c-11e7-8837-b5cf0c12eae1",
+                "name": "Network0",
+                "type": "NetworkNode",
+                "x": 451.34375,
+                "y": 223
+            },
+            "target": {
+                "configurations": [],
+                "gid": "060eb300-ff2c-11e7-8837-b5cf0c12eae1",
+                "name": "Router0",
+                "status": null,
+                "type": "Router",
+                "x": 411.34375,
+                "y": 87
+            },
+            "type": "NetworkLink"
+        },
+        {
+            "gid": "0f83a8a0-ff2c-11e7-8837-b5cf0c12eae1",
+            "ip": "10.0.0.8",
+            "name": "Network0_Instance0",
+            "network": {
+                "cidr": "10.0.0.0/24",
+                "gid": "08b6efa0-ff2c-11e7-8837-b5cf0c12eae1",
+                "name": "Network0",
+                "type": "NetworkNode",
+                "x": 451.34375,
+                "y": 223
+            },
+            "target": null,
+            "type": "NetworkLink"
+        },
+        {
+            "gid": "10f7f920-ff2c-11e7-8837-b5cf0c12eae1",
+            "ip": "10.0.0.5",
+            "name": "Network0_Instance1",
+            "network": null,
+            "target": {
+                "configurations": [
+                    "Enable password authentication",
+                    "noVNC"
+                ],
+                "flavor": {
+                    "name": "Large",
+                    "ram": 4096
+                },
+                "gid": "0d48fae0-ff2c-11e7-8837-b5cf0c12eae1",
+                "image": "mininet-vm",
+                "name": "mininet-vm",
+                "status": null,
+                "type": "Instance",
+                "x": 597.34375,
+                "y": 337
+            },
+            "type": "NetworkLink"
+        },
+        {
+            "gid": "f301ce60-079a-11e8-98f4-5ba75b1e51a5",
+            "ip": "10.0.1.256",
+            "name": "Network1_mininet-vm",
+            "network": {
+                "cidr": "10.0.1.0/24",
+                "gid": "ddeeff",
+                "name": "backup network",
+                "type": "NetworkNode",
+                "x": 672.515625,
+                "y": 211
+            },
+            "target": {
+                "configurations": [
+                    "Enable password authentication",
+                    "noVNC"
+                ],
+                "flavor": {
+                    "name": "Large",
+                    "ram": 4096
+                },
+                "gid": "0d48fae0-ff2c-11e7-8837-b5cf0c12eae1",
+                "image": "mininet-vm",
+                "name": "mininet-vm",
+                "status": null,
+                "type": "Instance",
+                "x": 597.34375,
+                "y": 337
+            },
+            "type": "NetworkLink"
+        },
+        {
+            "gid": "bb034880-079b-11e8-aa76-8f7dafd1be43",
+            "ip": "10.0.1.10",
+            "name": "backupnet_Router0",
+            "network": {
+                "cidr": "10.0.1.0/24",
+                "gid": "f181e520-079a-11e8-98f4-5ba75b1e51a5",
+                "name": "backup network",
+                "type": "NetworkNode",
+                "x": 672.515625,
+                "y": 211
+            },
+            "target": {
+                "configurations": [],
+                "gid": "aabbcc",
+                "name": "Router0",
+                "status": null,
+                "type": "Router",
+                "x": 411.34375,
+                "y": 87
+            },
+            "type": "NetworkLink"
+        }
+    ]
+}

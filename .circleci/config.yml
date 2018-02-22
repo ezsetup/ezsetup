@@ -39,6 +39,7 @@ jobs:
                     pipenv run mypy --ignore-missing-imports app.py
                     pipenv run mypy --ignore-missing-imports tests
                     PYTHONPATH=. pipenv run pytest
+                    PYTHONPATH=. pipenv run pytest api/
 
 workflows:
     version: 2
