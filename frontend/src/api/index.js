@@ -1,6 +1,6 @@
 import store from '@/store'
 
-let API_SERVER = typeof process.env.API_SERVER === 'undefined' ? 'http://127.0.0.1:5000' : process.env.API_SERVER
+let API_SERVER = typeof process.env.API_SERVER === 'undefined' || process.env.API_SERVER === 'undefined' ? 'http://127.0.0.1:5000' : process.env.API_SERVER
 
 function authHeaders () {
   return {
