@@ -27,15 +27,15 @@ SECURITY_GROUP_RULES = [
 
 TOPO = {
     'instances': [
-        {'id': 0, 'type': 'Instance', 'name': 'Instance0', 'x': 138.015625, 'y': 347},
-        {'id': 1, 'type': 'Instance', 'name': 'Instance1', 'x': 534.015625, 'y': 416}
+        {'id': 0, 'image': 'Ubuntu 16.04 x64', 'flavor': {"name": "Large", "ram": 4096}, 'type': 'Instance', 'name': 'Instance0', 'x': 138.015625, 'y': 347, 'gid': '1'},
+        {'id': 1, 'image': 'Ubuntu 16.04 x64', 'flavor': {"name": "Large", "ram": 4096}, 'type': 'Instance', 'name': 'Instance1', 'x': 534.015625, 'y': 416, 'gid': '2'}
     ],
     'networks': [
-        {'id': 0, 'type': 'NetworkNode', 'name': 'Network0', 'x': 409.015625, 'y': 105, 'cidr': '192.168.1.0/24'}
+        {'id': 0, 'type': 'NetworkNode', 'name': 'Network0', 'x': 409.015625, 'y': 105, 'cidr': '192.168.1.0/24', 'gid': '3'}
     ],
     'links': [
-        {'id': 0, 'type': 'NetworkLink', 'name': 'Link0', 'networkId': 0, 'instanceId': 0, 'ip': '192.168.1.11'},
-        {'id': 1, 'type': 'NetworkLink', 'name': 'Link1', 'networkId': 0, 'instanceId': 1, 'ip': '192.168.1.12'}
+        {'id': 0, 'type': 'NetworkLink', 'name': 'Link0', 'network': {'gid': '3'}, 'target': {'gid': '1'}, 'ip': '192.168.1.11'},
+        {'id': 1, 'type': 'NetworkLink', 'name': 'Link1', 'network': {'gid': '3'}, 'target': {'gid': '1'}, 'networkId': 0, 'instanceId': 1, 'ip': '192.168.1.12'}
     ]
 }
 
@@ -149,11 +149,13 @@ class ScenarioTestCase(unittest.TestCase):
         })
         assert rv.status_code == 200
         json_data = json.loads(rv.data)
-        assert len(json_data) == 1
-        assert json_data[0]['id'] == scenario_id
-        assert json_data[0]['name'] == 'testScenario2'
-        assert json_data[0]['description'] == 'ola'
-        assert json_data[0]['sgRules'] == SECURITY_GROUP_RULES
+
+        testScenario2 = next(filter(lambda x: x['name'] == 'testScenario2', json_data), None)
+        assert testScenario2 is not None
+        assert testScenario2['id'] == scenario_id
+        assert testScenario2['name'] == 'testScenario2'
+        assert testScenario2['description'] == 'ola'
+        assert testScenario2['sgRules'] == SECURITY_GROUP_RULES
 
 
 class LabTestCase(unittest.TestCase):

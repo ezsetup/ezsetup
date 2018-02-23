@@ -1,28 +1,39 @@
 <template>
-  <table class="table is-striped">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(slice, i) in slices" track-by="$index">
-        <td>{{ i + 1 }}</td>
-        <td><router-link :to="{ name: 'Slice', params: { sliceId: slice.id } }">{{ slice.lab.name }}</router-link></td>
-        <td>{{ slice.lab.description }}</td>
-        <td>
-          <status-indicator :status="slice.status"></status-indicator>
-        </td>
-        <td>
-          <router-link :to="{ name: 'Slice', params: { sliceId: slice.id } }">View</router-link>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <div>
+    <div class="columns">
+      <div class="column">
+        <h1 class="title">Workspace</h1>
+      </div>
+    </div>
+    <div class="columns">
+      <div class="column">
+        <table class="table is-striped">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(slice, i) in slices" track-by="$index">
+              <td>{{ i + 1 }}</td>
+              <td><router-link :to="{ name: 'Slice', params: { sliceId: slice.id } }">{{ slice.lab.name }}</router-link></td>
+              <td>{{ slice.lab.description }}</td>
+              <td>
+                <status-indicator :status="slice.status"></status-indicator>
+              </td>
+              <td>
+                <router-link class="button is-small" :to="{ name: 'Slice', params: { sliceId: slice.id } }">View</router-link>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>

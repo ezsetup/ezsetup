@@ -60,13 +60,13 @@
       </div>
     </div>
 
-    <article v-if="message.error" class="message is-danger">
+    <article v-if="errors.length > 0" class="message is-danger">
       <div class="message-header">
         <p>Error</p>
-        <button class="delete" @click="message.error = ''"></button>
+        <button class="delete" @click="errors = []"></button>
       </div>
       <div class="message-body">
-        {{ message.error }}
+        {{ errors }}
       </div>
     </article>
   </div>
@@ -158,9 +158,7 @@ export default {
 
       flavors: [],
 
-      message: {
-        error: ''
-      }
+      errors: []
     }
   },
 
@@ -258,8 +256,8 @@ export default {
           let onFailed = json => {
             button.theme = 'is-success';
             button.disabled = false;
-            if (json && json.message) {
-              this.message.error = json.message;
+            if (json && json.errors) {
+              this.errors = json.errors;
             }
           };
           if (this.isNewScenario) {

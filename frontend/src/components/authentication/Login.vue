@@ -21,8 +21,7 @@
 </template>
 
 <script>
-  import store from '@/store'
-  import {login} from '@/api'
+  import { login, GETUserSelf } from '@/api'
 
   export default {
     name: 'login',
@@ -52,7 +51,10 @@
             if (response.ok) {
               response.json().then((json) => {
                 this.$store.commit('setAuth', json)
-                this.$router.push('/')
+                GETUserSelf(json => {
+                  this.$store.commit('setUserInfo', json)
+                  this.$router.push('/')
+                })
               })
             } else {
               if (response.status === 401) {

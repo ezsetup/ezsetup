@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Index from '@/components/Index'
+
 import Login from '@/components/authentication/Login'
 
 import LabsManagement from '@/components/labs/LabsManagement'
@@ -28,89 +28,96 @@ const router = new Router({
     {
       path: '/',
       name: 'index',
-      component: Index,
+      redirect: to => store.getters.isRoot ? '/labs' : '/workspace',
       meta: {
         authRequired: true
-      },
-      children: [
-        {
-          path: 'workspace',
-          component: WorkSpace,
-          name: 'WorkSpace',
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: 'labs',
-          component: LabsManagement,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: 'users',
-          component: UsersManagement,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: 'users/new',
-          name: 'NewUser',
-          component: UserCreation,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: 'scenarios',
-          component: ScenariosManagement,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: '/scenarios/new',
-          name: 'NewScenario',
-          component: ScenarioEditor,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: '/scenarios/:id',
-          name: 'ScenarioEditor',
-          component: ScenarioEditor,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: '/labs/new',
-          name: 'NewLab',
-          component: NewLab,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: '/labs/:id',
-          name: 'Lab',
-          component: Lab,
-          meta: {
-            authRequired: true
-          }
-        },
-        {
-          path: '/slices/:sliceId',
-          name: 'Slice',
-          component: Slice,
-          meta: {
-            authRequired: true
-          }
-        }
-      ]
+      }
+    },
+    {
+      path: '/workspace',
+      component: WorkSpace,
+      name: 'WorkSpace',
+      meta: {
+        rootRequired: false,
+        authRequired: true
+      }
+    },
+    {
+      path: '/labs',
+      component: LabsManagement,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/users',
+      component: UsersManagement,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/users/new',
+      name: 'NewUser',
+      component: UserCreation,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/scenarios',
+      component: ScenariosManagement,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/scenarios/new',
+      name: 'NewScenario',
+      component: ScenarioEditor,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/scenarios/:id',
+      name: 'ScenarioEditor',
+      component: ScenarioEditor,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/labs/new',
+      name: 'NewLab',
+      component: NewLab,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/labs/:id',
+      name: 'Lab',
+      component: Lab,
+      meta: {
+        rootRequired: true,
+        authRequired: true
+      }
+    },
+    {
+      path: '/slices/:sliceId',
+      name: 'Slice',
+      component: Slice,
+      meta: {
+        authRequired: true
+      }
     },
     {
       path: '/login',
@@ -121,17 +128,13 @@ const router = new Router({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.meta.authRequired) {
-    if (store.state.auth) {
-      next()
-    } else {
-      next({
-        path: '/login'
-      })
-    }
-  } else {
-    next()
+  if (to.meta.authRequired && !store.state.auth) {
+    return next({ path: '/login' })
   }
+  if (to.meta.rootRequired && !store.getters.isRoot) {
+    return next({ path: '/' })
+  }
+  next()
 })
 
 export default router
