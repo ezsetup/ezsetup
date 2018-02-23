@@ -255,6 +255,7 @@ def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], to
     configurations = []
 
     # configurations.append({"name": "staticroute", "params": _extract_static_route(instance, topo)})
+    configurations.append({"name": "add-local-host", "params": {}})
 
     if instance['type'] == "Router":
         """ Get the number of interfaces """

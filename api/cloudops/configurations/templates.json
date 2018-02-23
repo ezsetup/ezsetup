@@ -24,5 +24,10 @@
         {
                 "name": "grr-client",
                 "path": "grr-client.yml"
+        },
+        {
+                "name": "add-local-host",
+                "path": "add-local-host.yml",
+                "hidden": true
         }
 ]
