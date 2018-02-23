@@ -6,7 +6,6 @@ import Cookies from 'js-cookie'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-
   state: {
     auth: null,
     userInfo: null
@@ -23,8 +22,11 @@ export default new Vuex.Store({
     authenticated: state => {
       return !(!state.auth)
     },
-    gotUserInfo: state => {
-      return state.userInfo !== undefined && state.userInfo !== null
+    isRoot: state => {
+      return state.auth == null ? false : state.auth.is_root
+    },
+    permissionGroups: state => {
+      return state.userInfo !== null ? state.userInfo.permissionGroups : []
     }
   },
   mutations: {
@@ -38,6 +40,7 @@ export default new Vuex.Store({
 
     logout (state) {
       state.auth = null
+      state.userInfo = null
     }
   }
 })
