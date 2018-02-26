@@ -33,12 +33,16 @@ def validate_network(network_config: dict) -> Tuple[bool, List[str]] :
         valid = False
         error_messages.append("Network: name required")
 
-    try:
-        ipaddress.IPv4Network(network_config['cidr'])
-    except ValueError as err:
+    if network_config.get('cidr') is None:
         valid = False
-        error_messages.append("Network {0}: {1}".format(
-            network_config['name'], str(err)))
+        error_messages.append("Network {0}: cidr required".format(network_config.get('name')))
+    else:
+        try:
+            ipaddress.IPv4Network(network_config['cidr'])
+        except ValueError as err:
+            valid = False
+            error_messages.append("Network {0}: {1}".format(
+                network_config.get('name'), str(err)))
 
     return valid, error_messages
 

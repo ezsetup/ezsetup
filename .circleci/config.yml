@@ -26,6 +26,13 @@ jobs:
             - checkout
             - run: | # init database
                     sudo apt install postgresql-client
+
+                    TIMEOUT=5
+                    until PGPASSWORD=123456 psql -h 127.0.0.1 -U ezsetup -d ezsetup -c "select 1" > /dev/null 2>&1 || [ $TIMEOUT -eq 0 ]; do
+                      echo "Waiting for postgres server, $((TIMEOUT--)) remaining attempts..."
+                      sleep 1
+                    done
+
                     cat api/database/migrations/*.sql | PGPASSWORD=123456 psql -q -h 127.0.0.1 -p 5432 -U ezsetup -d ezsetup
             - run: sudo pip install pipenv
             - run:
