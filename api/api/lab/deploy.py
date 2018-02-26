@@ -9,6 +9,7 @@ from models import CloudConfig, Slice, Scenario, Instance, NetworkNode, Router, 
 from api.lab.helpers import randomword
 
 from raven import Client
+
 # Use sentry to send manually caught exceptions
 sentry_raven = Client()
 
@@ -202,7 +203,7 @@ def _create_routers(cloudops: CloudOps, lab: Lab, sl, topo, sec_group_id):
             nets.append(net)
 
         public_ip, attrs = cloudops.create_router(
-                router.name, nets, ips, router.configurations, sec_group_id, router.image, router.flavor)
+            router.name, nets, ips, router.configurations, sec_group_id, router.image, router.flavor)
         router.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
 
 
@@ -231,9 +232,15 @@ def _update_allowed_address_pairs(cloudops: CloudOps, slice_: Slice, topo):
         else:
             continue
         for raw_address_pair in link.get('allowedAddressPairs', []):
-            mac_address, ip_address = raw_address_pair.split(',', 2)
-            if re.match(mac_regex, mac_address.strip()) and re.match(ip_cidr_regex, ip_address.strip()):
-                address_pairs.append({ 'ip_address': ip_address, 'mac_address': mac_address })
+            mac_address, ip_address, _ = (raw_address_pair + ',,').split(',', 2)
+            if ip_address.strip() == '':
+                ip_address = mac_address
+                mac_address = ''
+            if (mac_address == '' or re.match(mac_regex, mac_address.strip())) and re.match(ip_cidr_regex, ip_address.strip()):
+                address_pair = {'ip_address': ip_address}
+                if mac_address != '':
+                    address_pair['mac_address'] = mac_address
+                address_pairs.append(address_pair)
         if address_pairs:
             cloudops.update_allowed_address_pairs(network, device.cloud_attrs['id'], address_pairs)
 
@@ -265,7 +272,7 @@ def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], to
     password = None
 
     for conf in instance['configurations']:
-        params : Dict[str, Any] = {}
+        params: Dict[str, Any] = {}
         if conf == "Enable password authentication" or conf == "noVNC":
             if password is None:
                 password = randomword(8)
@@ -279,7 +286,7 @@ def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], to
     return configurations, password
 
 
-def _extract_static_route(instance: Dict[str, Any], topo: Dict[str, Any]) -> Dict[str, Any] :
+def _extract_static_route(instance: Dict[str, Any], topo: Dict[str, Any]) -> Dict[str, Any]:
     """Extract static route for an instance / router instance
     - TODO: implement me
     - TODO: check if _extract_static_route works with cases where there are more than one routers connected to an instance,
@@ -296,7 +303,6 @@ def _extract_static_route(instance: Dict[str, Any], topo: Dict[str, Any]) -> Dic
         # TODO: find the all routers, exclude the instance (if the instance is also a router)
         # routers = []
         pass
-
 
     # for each network, get the ip of the router and directly/indirectly connected cidrs
 

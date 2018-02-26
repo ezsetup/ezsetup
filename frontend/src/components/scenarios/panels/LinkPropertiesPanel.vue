@@ -14,7 +14,7 @@
         <div class="field" v-for="(pair, i) in allowedAddressPairs" track-by="$index">
           <div class="field has-addons">
             <div class="control is-expanded">
-              <input class="input" type="text" v-model="pair.value" placeholder="e.g.: 1b:10:84:ff:c9:39,10.0.2.0/16">
+              <input class="input" type="text" v-model="pair.value" placeholder="e.g.: 10.0.2.0/16 or 1b:10:84:ff:c9:39,10.0.2.0/16">
             </div>
             <div class="control">
               <button class="button is-danger" @click="deleteAllowedAddressPair(pair)">
@@ -86,8 +86,12 @@
 
         this.error.allowedAddressPairs = {};
         this.allowedAddressPairs.forEach((pair, i) => {
-          const [ mac, ip ] = pair.value.trim().split(',');
-          if (!MAC_PATTERN.test(mac.trim()) || !(IP_PATTERN.test(ip.trim()) || CIDR_PATTERN.test(ip.trim()))) {
+          let [ mac, ip ] = pair.value.trim().split(',');
+          if (!ip || !ip.trim()) {
+            ip = mac;
+            mac = null;
+          }
+          if ((mac && !MAC_PATTERN.test(mac.trim())) || !(IP_PATTERN.test(ip.trim()) || CIDR_PATTERN.test(ip.trim()))) {
             this.error.allowedAddressPairs[i] = 'Allowed address pair is invalid';
             passed = false;
           }
