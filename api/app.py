@@ -13,13 +13,14 @@ from api.cloudconfig import Cloudconfigs
 from api.slice import Slices
 from api.configuration import Configurations
 from api.flavor import Flavors
+from api.assessment import Assessments
 
 app = Flask(__name__)
 app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
 app.secret_key = "joifosdjfoisjiowjroijfsldjflsjfsdopoew"
 
-register(app, [Users, Scenarios, Labs, Cloudconfigs, Slices, Configurations, Flavors], '/api')
+register(app, [Users, Scenarios, Labs, Cloudconfigs, Slices, Configurations, Flavors, Assessments], '/api')
 
 CORS(app)
 

@@ -17,6 +17,9 @@ import UserCreation from '@/components/users/UserCreation'
 
 import WorkSpace from '@/components/workspace/WorkSpace'
 
+import Assessment from '@/components/assessment/Assessment'
+import newAssessment from '@/components/assessment/newAssessment'
+
 import store from '@/store'
 // import Cookies from 'js-cookie'
 
@@ -106,6 +109,22 @@ const router = new Router({
           path: '/slices/:sliceId',
           name: 'Slice',
           component: Slice,
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: 'assessment',
+          component: Assessment,
+          name: 'Assessment',
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: 'assessment/new',
+          component: newAssessment,
+          name: 'newAssessment',
           meta: {
             authRequired: true
           }

@@ -306,6 +306,34 @@ function LISTFlavors (jsonOkCallback) {
   _GET('/api/flavors/', jsonOkCallback)
 }
 
+// Functions for Assessment module
+
+function POSTAssessment (title, description, questions, scores, jsonOkCallback) {
+  console.log('API client - POST /api/assessments/ - inputs:', title, description, questions, scores)
+  let options = {
+    headers: authHeaders(),
+    method: 'POST',
+    body: JSON.stringify({
+      'atitle': title,
+      'adescription': description,
+      'questions': questions,
+      'scores': scores
+    })
+  }
+  console.log('API client - POST /api/assessments/ - body:', options.body)
+
+  fetch(API_SERVER + '/api/assessments/', options)
+    .then(response => {
+      if (response.ok) {
+        response.json().then(jsonOkCallback)
+      }
+    })
+}
+
+function LISTAssessments (jsonOkCallback) {
+  _GET('/api/assessments/', jsonOkCallback)
+}
+
 export {
   login,
   GETUserSelf,
@@ -332,6 +360,9 @@ export {
   LISTInstanceConfigurations,
   LISTRouterConfigurations,
 
-  LISTFlavors
+  LISTFlavors,
+
+  POSTAssessment,
+  LISTAssessments
 
 }

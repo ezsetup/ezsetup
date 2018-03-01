@@ -96,3 +96,20 @@ create table routers (id SERIAL PRIMARY KEY,
                           configurations JSONB[], -- list of software configurations
                           flavor JSONB, -- flavor (name, ram) information
                           slice_id INTEGER REFERENCES slices(id) ON DELETE CASCADE);
+
+-- Tables for assessment module
+create table assessments (id SERIAL PRIMARY KEY,
+                          atitle TEXT,
+	                        adescription TEXT,
+	                        questions INTEGER[],
+	                        scores INTEGER[],
+                          UNIQUE (atitle));
+
+create table questions (id SERIAL PRIMARY KEY,
+	                      qtype TEXT,
+                        qtitle TEXT,
+                        question TEXT,
+                        answers TEXT[],
+                        correct INTEGER[],
+                        feedback TEXT,
+                        UNIQUE (qtitle));

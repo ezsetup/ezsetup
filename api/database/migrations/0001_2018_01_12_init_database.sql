@@ -908,6 +908,153 @@ ALTER TABLE ONLY userinfos
     ADD CONSTRAINT userinfos_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE;
 
 
+-- Table info for Assessment Module
+
+--
+-- Name: assessments; Type: TABLE; Schema: public; Owner: ezsetup
+--
+
+CREATE TABLE assessments (
+	id integer NOT NULL,
+	atitle text,
+	adescription text,
+	questions integer[],
+	scores integer[]
+);
+
+ALTER TABLE assessments OWNER TO ezsetup;
+
+--
+-- Name: assessments_id_seq; Type: SEQUENCE; Schema: public; Owner: ezsetup
+--
+
+CREATE SEQUENCE assessments_id_seq
+	START WITH 1
+	INCREMENT BY 1
+	NO MINVALUE
+	NO MAXVALUE
+	CACHE 1;
+
+ALTER TABLE assessments_id_seq OWNER TO ezsetup;
+
+--
+-- Name: assessments_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ezsetup
+--
+
+ALTER SEQUENCE assessments_id_seq OWNED BY assessments.id;
+
+--
+-- Name: questions; Type: TABLE; Schema: public; Owner: ezsetup
+--
+
+CREATE TABLE questions (
+	id integer NOT NULL,
+	qtype text,
+	qtitle text,
+	question text,
+	answers text[],
+	correct integer[],
+	feedback text
+);
+
+ALTER TABLE questions OWNER TO ezsetup;
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE; Schema: public; Owner: ezsetup
+--
+
+CREATE SEQUENCE questions_id_seq
+	START WITH 1
+	INCREMENT BY 1
+	NO MINVALUE
+	NO MAXVALUE
+	CACHE 1;
+
+ALTER TABLE questions_id_seq OWNER TO ezsetup;
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ezsetup
+--
+
+ALTER SEQUENCE questions_id_seq OWNED BY questions.id;
+
+
+--
+-- Name: assessments id; Type: DEFAULT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments ALTER COLUMN id SET DEFAULT nextval('assessments_id_seq'::regclass);
+
+--
+-- Name: assessments id; Type: DEFAULT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY questions ALTER COLUMN id SET DEFAULT nextval('questions_id_seq'::regclass);
+
+
+
+--
+-- Data for Name: assessments; Type: TABLE DATA; Schema: public; Owner: ezsetup
+--
+
+COPY assessments (id, atitle, adescription, questions, scores) FROM stdin;
+\.
+
+
+--
+-- Name: assessments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ezsetup
+--
+
+SELECT pg_catalog.setval('assessments_id_seq', 1, false);
+
+
+
+--
+-- Data for Name: questions; Type: TABLE DATA; Schema: public; Owner: ezsetup
+--
+
+COPY questions (id, qtype, qtitle, question, answers, correct, feedback) FROM stdin;
+\.
+
+
+--
+-- Name: questions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ezsetup
+--
+
+SELECT pg_catalog.setval('questions_id_seq', 1, false);
+
+
+--
+-- Name: assessments assessments_atitle_key; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments
+    ADD CONSTRAINT assessments_atitle_key UNIQUE (atitle);
+
+
+--
+-- Name: assessments assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments
+    ADD CONSTRAINT assessments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: questions questions_qtitle_key; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY questions
+    ADD CONSTRAINT questions_qtitle_key UNIQUE (qtitle);
+
+
+--
+-- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY questions
+    ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
+
 --
 -- PostgreSQL database dump complete
 --

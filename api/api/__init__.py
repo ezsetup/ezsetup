@@ -35,6 +35,11 @@ labs_management.add("Slices", "get")
 labs_management.add("Configurations", "index")
 labs_management.add("Flavors", "index")
 
+# Additional lab management permissions for Assessment module
+labs_management.add("Assessments", "post")
+labs_management.add("Assessments", "get")
+labs_management.add("Assessments", "index")
+
 scenarios_management = PermissionGroup("scenarios")
 scenarios_management.add("Scenarios", "post")
 scenarios_management.add("Scenarios", "get")

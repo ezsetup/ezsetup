@@ -110,3 +110,26 @@ class UserInfo(Model):
 
     class Meta:
         table = 'userinfos'
+
+
+# Models for Assessment Module
+
+class Assessments(Model):
+    atitle = TextField()
+    adescription = TextField()
+    questions = ArrayField()
+    scores = ArrayField()
+
+    class Meta:
+        table = 'assessments'
+
+class Questions(Model):
+    qtype = TextField()
+    qtitle = TextField()
+    question = TextField()
+    answers = ArrayField()
+    correct = ArrayField()
+    feedback = TextField()
+
+    class Meta:
+        table = 'questions'
