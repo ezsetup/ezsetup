@@ -949,11 +949,11 @@ ALTER SEQUENCE assessments_id_seq OWNED BY assessments.id;
 
 CREATE TABLE questions (
 	id integer NOT NULL,
-	qtype text,
+	qkind text,
 	qtitle text,
-	question text,
+	qtext text,
 	answers text[],
-	correct integer[],
+	correct text[],
 	feedback text
 );
 
@@ -1013,7 +1013,7 @@ SELECT pg_catalog.setval('assessments_id_seq', 1, false);
 -- Data for Name: questions; Type: TABLE DATA; Schema: public; Owner: ezsetup
 --
 
-COPY questions (id, qtype, qtitle, question, answers, correct, feedback) FROM stdin;
+COPY questions (id, qkind, qtitle, qtext, answers, correct, feedback) FROM stdin;
 \.
 
 

@@ -114,7 +114,7 @@ class UserInfo(Model):
 
 # Models for Assessment Module
 
-class Assessments(Model):
+class Assessment(Model):
     atitle = TextField()
     adescription = TextField()
     questions = ArrayField()
@@ -123,10 +123,10 @@ class Assessments(Model):
     class Meta:
         table = 'assessments'
 
-class Questions(Model):
-    qtype = TextField()
+class Question(Model):
+    qkind = TextField()
     qtitle = TextField()
-    question = TextField()
+    qtext = TextField()
     answers = ArrayField()
     correct = ArrayField()
     feedback = TextField()

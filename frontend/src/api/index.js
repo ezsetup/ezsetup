@@ -308,14 +308,14 @@ function LISTFlavors (jsonOkCallback) {
 
 // Functions for Assessment module
 
-function POSTAssessment (title, description, questions, scores, jsonOkCallback) {
-  console.log('API client - POST /api/assessments/ - inputs:', title, description, questions, scores)
+function POSTAssessment (atitle, adescription, questions, scores, jsonOkCallback) {
+  console.log('API client - POST /api/assessments/ - inputs:', atitle, adescription, questions, scores)
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
-      'atitle': title,
-      'adescription': description,
+      'atitle': atitle,
+      'adescription': adescription,
       'questions': questions,
       'scores': scores
     })
@@ -334,14 +334,15 @@ function LISTAssessments (jsonOkCallback) {
   _GET('/api/assessments/', jsonOkCallback)
 }
 
-function POSTQuestion (title, question, answers, correct, feedback, jsonOkCallback) {
-  console.log('API client - POST /api/questions/ - inputs:', title, question, answers, correct, feedback)
+function POSTQuestion (qkind, qtitle, qtext, answers, correct, feedback, jsonOkCallback) {
+  console.log('API client - POST /api/questions/ - inputs:', qkind, qtitle, qtext, answers, correct, feedback)
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
-      'qtitle': title,
-      'question': question,
+      'qkind': qkind,
+      'qtitle': qtitle,
+      'qtext': qtext,
       'answers': answers,
       'correct': correct,
       'feedback': feedback

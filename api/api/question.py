@@ -1,6 +1,6 @@
 from flask import jsonify, g, request
 from flask_classful import route, FlaskView
-from models import Assessments
+from models import Question
 from auth.decorators import login_required
 from api import permission_required
 from postgrespy import UniqueViolatedError
@@ -11,13 +11,14 @@ class Questions(FlaskView):
     decorators = [login_required, permission_required]
 
     def index(self):
-        questions = Questions.fetchall()
+        questions = Question.fetchall()
         ret = []
         for question in questions:
             ret.append({
                 'id': question.id,
+                'qkind': question.qkind,
                 'qtitle': question.qtitle,
-                'question': question.question,
+                'qtext': question.qtext,
                 'answers': question.answers,
                 'correct': question.correct,
                 'feedback': question.feedback
@@ -29,16 +30,17 @@ class Questions(FlaskView):
 
     def post(self):
         """Create new question"""
+        qkind = request.get_json()['qkind']
         qtitle = request.get_json()['qtitle']
-        question = request.get_json()['question']
+        qtext = request.get_json()['qtext']
         answers = request.get_json()['answers']
         correct = request.get_json()['correct']
         feedback = request.get_json()['feedback']
-        new_question = Questions(qtitle=qtitle, question=question,
+        new_question = Question(qkind=qkind, qtitle=qtitle, qtext=qtext,
                         answers=answers, correct=correct, feedback=feedback)
         try:
             new_question.save()
         except UniqueViolatedError:
-            return jsonify(error="Duplicated assessment title"), 409
+            return jsonify(error="Duplicated question title"), 409
         return jsonify(message="ok")
 

@@ -12,19 +12,23 @@
     <tbody>
       <tr v-for="(question, i) in questions" track-by="$index">
         <td>{{ i + 1 }}</td>
-        <td>{{ question.title }}</td>
+        <td>{{ question.qtitle }}</td>
         <td><input class="text" type="textbox" v-bind="scores[i-1]"></td>
       </tr>
     </tbody>
   </table>
+    <select v-model="questions">
+      <option v-for="(question) in allQuestions" track-by="$index" :value="question.qtitle">{{ question.qtitle }}</option>
+    </select>
     <new-question></new-question>
-    <button v-if="isLoading" type="submit" class="button is-primary is-loading" @click="onSubmitBtn">SUBMIT</button>
-    <button v-else type="submit" class="button is-primary" @click="onSubmitBtn">SUBMIT</button>
+    <button v-if="isLoading" type="submit" class="button is-primary is-loading" @click="submitAssessment">Save Assessment</button>
+    <button v-else type="submit" class="button is-primary" @click="submitAssessment">Save Assessment</button>
   </div>
 </template>
 
 <script>
-import {POSTAssessment} from "@/api"
+import {POSTAssessment} from '@/api'
+import {LISTQuestions} from '@/api'
 import newQuestion from '@/components/assessment/newQuestion.vue'
 export default {
   name: 'newAssessment',
@@ -38,16 +42,21 @@ export default {
     questions: [],
     scores: [],
 	  newQuestion: false,
-    isLoading: false
+    isLoading: false,
+    allQuestions: []
 	}
   },
+  created: function () {
+    LISTQuestions (json => {
+      this.allQuestions = json
+    })
+  },
   methods: {
-    onSubmitBtn: function() {
+    submitAssessment: function() {
       this.isLoading = true
       POSTAssessment(this.title, this.description, this.questions, this.scores, json => {
-        this.$router.push('/assessments')
+        this.$router.push('/assessments')})
         this.isLoading = false
-      })
     }
   }
 }

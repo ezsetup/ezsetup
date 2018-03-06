@@ -106,10 +106,10 @@ create table assessments (id SERIAL PRIMARY KEY,
                           UNIQUE (atitle));
 
 create table questions (id SERIAL PRIMARY KEY,
-	                      qtype TEXT,
+	                      qkind TEXT,
                         qtitle TEXT,
-                        question TEXT,
+                        qtext TEXT,
                         answers TEXT[],
-                        correct INTEGER[],
+                        correct TEXT[],
                         feedback TEXT,
                         UNIQUE (qtitle));

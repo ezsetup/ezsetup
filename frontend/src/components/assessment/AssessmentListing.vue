@@ -10,7 +10,7 @@
     <tbody>
       <tr v-for="(assessment, i) in assessments" track-by="$index">
         <td>{{ i + 1 }}</td>
-        <td>{{ assessments.atitle }}</td>
+        <td>{{ assessment.atitle }}</td>
       </tr>
     </tbody>
   </table>
