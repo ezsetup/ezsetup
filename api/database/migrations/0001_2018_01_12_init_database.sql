@@ -918,8 +918,8 @@ CREATE TABLE assessments (
 	id integer NOT NULL,
 	atitle text,
 	adescription text,
-	questions integer[],
-	scores integer[]
+	questions text[],
+	scores text[]
 );
 
 ALTER TABLE assessments OWNER TO ezsetup;

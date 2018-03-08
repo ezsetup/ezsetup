@@ -101,8 +101,8 @@ create table routers (id SERIAL PRIMARY KEY,
 create table assessments (id SERIAL PRIMARY KEY,
                           atitle TEXT,
 	                        adescription TEXT,
-	                        questions INTEGER[],
-	                        scores INTEGER[],
+	                        questions TEXT[],
+	                        scores TEXT[],
                           UNIQUE (atitle));
 
 create table questions (id SERIAL PRIMARY KEY,

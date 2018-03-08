@@ -99,7 +99,7 @@ export default {
 	  submitQuestion: function() {
       this.isLoading = true
       POSTQuestion(this.qkind, this.qtitle, this.qtext, this.answers, this.correct, this.feedback, json => {
-        this.$router.push('/questions')})
+        this.$router.push('/assessment/new')})
         this.addQuestion = false
         this.isLoading = false
     },
