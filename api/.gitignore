@@ -9,3 +9,4 @@ auth/__pycache__/
 .swp
 .DS_Store
 .mypy_cache
+.nvim/init.vim

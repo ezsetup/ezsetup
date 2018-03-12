@@ -30,7 +30,8 @@
     sudo su postgres -c "cat api/database/migrations/*.sql | psql -d ${POSTGRES_USER}"
     ```
 4. Run `make install` to install requirements for the `frontend` and `api` projects;
-5. Run `make run-api` to start the `api` server, or `make run-frontend` to start the `frontend` server. Run `make test` 
+5. Run `make run-worker` to start a redis-queue worker
+6. Run `make run-api` to start the `api` server, or `make run-frontend` to start the `frontend` server. Run `make test` 
 to execute tests.
 
 ## With Vagrant

@@ -1,7 +1,7 @@
 <template>
   <div>
     <LabDeployment v-if="status==='inactive'" @deploying="onStartDeploying" :name="name"></LabDeployment>
-    <LabViewer v-else-if="status!=='inactive'" @destroying="onStartDestroying" :name="name" :slices="slices" :status="status"></LabViewer>
+    <LabViewer v-else-if="status!=='inactive'" @destroying="onStartDestroying" :name="name" :slices="slices" :status="status" :errors="errors"></LabViewer>
   </div>
 </template>
 
@@ -23,7 +23,8 @@
         slices: [],
         pollingTimeout: 3000,
         timeoutId: null,
-        labId: null
+        labId: null,
+        errors: []
       }
     },
     created: function () {
@@ -36,6 +37,7 @@
           this.status = json.status
           this.name = json.name
           this.slices = json.slices
+          this.errors = json.errors
           if (this.status === 'deploying' || this.status === 'destroying') {
             this.timeoutId = setTimeout(() => {
               this.pollLab()

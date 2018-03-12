@@ -20,6 +20,9 @@
         </router-link>
       </div>
     </div>
+    <div>
+      <p v-for="err in errors">{{err}}</p>
+    </div>
   </div>
 </template>
 <style scoped>
@@ -36,7 +39,7 @@
 
   export default {
     name: 'LabViewer',
-    props: ['name', 'slices', 'status'],
+    props: ['name', 'slices', 'status', 'errors'],
     components: { StatusIndicator },
     data: function () {
       return {

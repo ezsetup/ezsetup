@@ -20,6 +20,7 @@ class Lab(Model):
     owner_id = IntegerField()
     scenario_id = IntegerField()
     status = EnumField()
+    error_msgs = ArrayField()
 
     class Meta:
         table = 'labs'

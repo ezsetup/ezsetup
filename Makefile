@@ -10,10 +10,13 @@ install-production:
 	cd frontend && npm install --production
 
 run-api:
-	cd api && pipenv run python app.py >> ../api-server.log 2>&1 &
+	cd api && pipenv run python app.py
+
+run-worker:
+	cd api && pipenv run rq worker -c backgroundjobs.settings
 
 run-frontend:
-	cd frontend && npm run dev >> ../frontend.log 2>&1 &
+	cd frontend && npm run dev
 
 test:
 	cd api && pipenv run mypy --ignore-missing-imports app.py

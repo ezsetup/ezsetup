@@ -1,8 +1,13 @@
+import time
+import os
+
 from app import app
 import unittest
 import json
 from manage import create_root, delete_user
 from typing import Tuple
+
+from models import Lab
 
 test_client = app.test_client()
 
@@ -39,6 +44,26 @@ TOPO = {
     ]
 }
 
+CLOUD_DETAIL = None
+
+os_username = os.environ.get('OPENSTACK_USERNAME', None)
+os_password = os.environ.get('OPENSTACK_PASSWORD', None)
+os_authurl = os.environ.get('OPENSTACK_AUTHURL', None)
+os_project = os.environ.get('OPENSTACK_PROJECT', None)
+
+if os_username is None or \
+    os_password is None or \
+    os_authurl is None or \
+    os_project is None:
+        
+    CLOUD_DETAIL = None
+else:
+    CLOUD_DETAIL = {
+      'openstackAuthURL': os_authurl,
+      'openstackUser': os_username,
+      'openstackPassword': os_password,
+      'openstackProject': os_project 
+    }
 
 def _login(email: str, password: str) -> Tuple[str, str, str]:
     rv = test_client.post('/auth/tokens/', headers={
@@ -180,7 +205,7 @@ class LabTestCase(unittest.TestCase):
         json_data = json.loads(rv.data)
         self.scenario_id = json_data['id']
 
-    def test_labs(self):
+        # Create a lab
         rv = test_client.post('/api/labs/', headers={
             'Content-Type': 'application/json',
             'Email': self.email,
@@ -191,6 +216,75 @@ class LabTestCase(unittest.TestCase):
             'scenarioId': self.scenario_id
         }))
         assert rv.status_code == 200
+        json_data = json.loads(rv.data)
+        self.lab_id = json_data['id']
+
+
+
+    @unittest.skipIf(CLOUD_DETAIL is None, 'No cloud detail is provided')
+    def test_deploy_destroy_lab(self):
+
+        # Create a cloud config
+        rv = test_client.post('/api/cloudconfigs/', 
+            headers={
+                'Content-Type': 'application/json',
+                'Email': self.email,
+                'Authorization': self.token
+            }, data=json.dumps({
+                'cloudDetail': CLOUD_DETAIL,
+                'provider': 'Openstack',
+                'labId': self.lab_id
+            }))
+        assert rv.status_code == 200
+
+        cloudconfig_id = json.loads(rv.data)['id']
+        users = [{'id': self.user_id}]
+
+        deploy_url = '/api/labs/{0}/deploy'.format(self.lab_id,)
+        rv = test_client.post(deploy_url, 
+            headers={
+                'Content-Type': 'application/json',
+                'Email': self.email,
+                'Authorization': self.token
+            }, data=json.dumps({
+                'cloudConfigId': cloudconfig_id,
+                'users': users
+            }))
+        assert rv.status_code == 200
+
+        # assert lab is active after a while
+        timeout = 10
+        while True:
+            lab = Lab.fetchone(id=self.lab_id)
+            if lab.status == 'active':
+                break
+            time.sleep(5)
+            timeout = timeout - 5
+            if timeout <= 0:
+                break
+        assert timeout > 0, "Deployment timeout"
+
+        
+
+        # destroy lab
+        destroy_url = '/api/labs/{0}/destroy'.format(self.lab_id,)
+        rv = test_client.post(destroy_url,
+            headers={
+                'Content-Type': 'application/json',
+                'Email': self.email,
+                'Authorization': self.token
+            })
+                
+        timeout = 10
+        while True:
+            lab = Lab.fetchone(id=self.lab_id)
+            if lab is None:
+                break
+            time.sleep(5)
+            timeout = timeout - 5
+            if timeout <= 0:
+                break
+        assert timeout > 0, "Deletion timeout"
 
 
 class UserAPITestCase(unittest.TestCase):
