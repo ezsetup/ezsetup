@@ -1,5 +1,5 @@
 import yaml
-from cloudops.configurations import generate_userdata
+from .configurations import generate_userdata
 
 def test_generate_userdata_password():
     configurations = [
