@@ -43,11 +43,7 @@ jobs:
                     pipenv install -d
             - run: 
                 command: |
-                    cd api
-                    pipenv run mypy --ignore-missing-imports app.py
-                    pipenv run mypy --ignore-missing-imports tests
-                    PYTHONPATH=. pipenv run pytest
-                    PYTHONPATH=. pipenv run pytest api/
+                    make test
 
 workflows:
     version: 2

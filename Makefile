@@ -1,5 +1,7 @@
-include .env
+-include .env
 export
+
+.PHONY : install install-production run-api run-worker run-frontend test db-shell db-dump
 
 install:
 	cd api && pip install pipenv && pipenv --python 3.6 && pipenv install -d
