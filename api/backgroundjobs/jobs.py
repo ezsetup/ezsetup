@@ -31,8 +31,9 @@ def create_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice, scena
 def delete_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice):
     try:
         cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
-        cloudops.ex_delete_security_group(
-            lab_slice.name, lab_slice.cloud_attrs['sec_group_id'])
+        if lab_slice.cloud_attrs.get('sec_group_id') is not None:
+            cloudops.ex_delete_security_group(
+                lab_slice.name, lab_slice.cloud_attrs['sec_group_id'])
     except Exception as ex:
         error_type = 'Delete security group error'
         error_msgs = [error_type + ': ' + str(ex)]
