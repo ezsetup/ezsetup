@@ -8,9 +8,6 @@ from auth.models import User
 from api import permission_required
 from auth.decorators import login_required
 
-from api.lab.deploy import DeployThread
-from api.lab.destroy import DestroyThread
-
 from backgroundjobs import queue, jobs
 
 from raven import Client
@@ -116,7 +113,7 @@ class Labs(FlaskView):
                         lab, lab_slice, topo, create_sec_group_job_id, depends_on=create_instances_job)
 
                 update_allowed_address_pairs_job = queue.enqueue(jobs.update_allowed_address_pairs, cloudconfig,
-                        lab_slice, topo, depends_on=create_routers_job)
+                        lab, lab_slice, topo, depends_on=create_routers_job)
 
                 set_slice_active_job = queue.enqueue(jobs.set_slice_active,
                         lab_slice, depends_on=update_allowed_address_pairs_job)

@@ -1,8 +1,10 @@
 import time
 from threading import Thread
+import re
 
 from rq.job import JobStatus
 from models import Slice, Lab, CloudConfig, NetworkNode, Instance, Router
+from auth.models import User
 from cloudops import CloudOps
 from typing import Dict, Any, List, Tuple
 from . import queue
@@ -22,18 +24,19 @@ def create_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice, scena
     except Exception as ex:
         error_type = 'Create security group error'
         error_msgs = [error_type + ': ' + str(ex)]
-
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 def delete_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice):
     try:
         cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
-        sec_group_id = cloudops.ex_delete_security_group(
+        cloudops.ex_delete_security_group(
             lab_slice.name, lab_slice.cloud_attrs['sec_group_id'])
     except Exception as ex:
         error_type = 'Delete security group error'
         error_msgs = [error_type + ': ' + str(ex)]
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -52,6 +55,7 @@ def create_vpc(cloudconfig: CloudConfig, lab: Lab):
         error_type = 'Create AWS VPC error'
         error_msgs = [error_type + ': ' + str(ex)]
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -63,6 +67,8 @@ def delete_vpc(cloudconfig: CloudConfig, lab: Lab):
     except Exception as ex:
         error_type = 'Delete AWS VPC error'
         error_msgs = [error_type + ': ' + str(ex)]
+
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
     
@@ -87,6 +93,7 @@ def set_lab_active(lab: Lab, last_jobs_ids):
             error_type = 'Time out error when trying to set lab active'
             error_msgs = [error_type]
 
+            lab = Lab.fetchone(id=lab.id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         else:
             lab.update(status='active', error_msgs=[])
@@ -111,6 +118,7 @@ def delete_lab(lab: Lab, last_jobs_ids):
         if timeout == 0:
             error_type = 'Time out error when trying to delete lab'
             error_msgs = [error_type]
+            lab = Lab.fetchone(id=lab.id)
             lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         else:
             lab.delete()
@@ -143,6 +151,7 @@ def create_networks(cloudconfig, lab, lab_slice, topo):
         error_type = 'Create networks error'
         error_msgs = [error_type + ': ' + str(ex)]
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -172,6 +181,8 @@ def delete_networks(cloudconfig, lab, lab_slice):
     except Exception as ex:
         error_type = 'Delete networks error'
         error_msgs = [error_type + ': ' + str(ex)]
+
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -200,8 +211,9 @@ class CreateInstanceThread(Thread):
             error_type = 'Create instances error'
             error_msgs = [error_type + ': ' + str(ex)]
 
-            lab = self.lab
+            lab = Lab.fetchone(id=self.lab.id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
+            raise Exception(error_type + str(error_msgs))
 
 def create_instances(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
     try:
@@ -237,6 +249,7 @@ def create_instances(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id)
         error_type = 'Create instances error'
         error_msgs = [error_type + ': ' + str(ex)]
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -256,7 +269,8 @@ class DeleteInstanceThread(Thread):
         except Exception as ex:
             error_type = 'Delete instances error'
             error_msgs = [error_type + ': ' + str(ex)]
-            lab = self.lab
+            
+            lab = Lab.fetchone(id=self.lab.id)
             lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
 
 def delete_instances(cloudconfig, lab, lab_slice):
@@ -273,6 +287,8 @@ def delete_instances(cloudconfig, lab, lab_slice):
     except Exception as ex:
         error_type = 'Delete instances error'
         error_msgs = [error_type + ': ' + str(ex)]
+
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -301,7 +317,7 @@ class CreateRouterThread(Thread):
             error_type = 'Create routers error'
             error_msgs = [error_type + ': ' + str(ex)]
 
-            lab = self.lab
+            lab = Lab.fetchone(id=self.lab.id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
 
 def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
@@ -309,7 +325,7 @@ def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
         cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
         sec_group_id = queue.fetch_job(create_sec_group_job_id).result
         # Prepare and save the instance models
-        for s in topo['routers']:
+        for s in topo.get('routers', []):
             links = _extract_links(s, topo)
             configurations, password = _extract_configurations(lab, lab_slice, s, topo)
 
@@ -338,6 +354,7 @@ def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
         error_type = 'Create routers error'
         error_msgs = [error_type + ': ' + str(ex)]
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -357,7 +374,9 @@ class DeleteRouterThread(Thread):
         except Exception as ex:
             error_type = 'Delete routers error'
             error_msgs = [error_type + ': ' + str(ex)]
-            self.lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
+
+            lab = Lab.fetchone(id=self.lab.id)
+            lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
 
 def delete_routers(cloudconfig, lab, lab_slice):
     try:
@@ -373,10 +392,12 @@ def delete_routers(cloudconfig, lab, lab_slice):
     except Exception as ex:
         error_type = 'Delete routers error'
         error_msgs = [error_type + ': ' + str(ex)]
+
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
-def update_allowed_address_pairs(cloudconfig, lab_slice, topo):
+def update_allowed_address_pairs(cloudconfig, lab, lab_slice, topo):
     try:
         cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
         ip_cidr_regex = '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4]' \
@@ -418,6 +439,7 @@ def update_allowed_address_pairs(cloudconfig, lab_slice, topo):
         error_type = 'Update allowed address pairs error'
         error_msgs = [error_type + ': ' + str(ex)]
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -429,6 +451,7 @@ def set_slice_active(lab_slice):
         error_msgs = [error_type + ': ' + str(ex)]
 
 
+        lab = Lab.fetchone(id=lab.id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
@@ -511,14 +534,14 @@ def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], to
     # configurations.append({"name": "staticroute", "params": _extract_static_route(instance, topo)})
     configurations.append({"name": "add-local-host", "params": {}})
 
-    if instance['type'] == "Router":
+    if instance.get('type') == "Router":
         """ Get the number of interfaces """
         interfaces_count = sum(1 for link in topo['links'] if link['target']['gid'] == instance['gid'])
         configurations.append({"name": "shorewall", "params": {"interfaces_count": interfaces_count}})
 
     password = None
 
-    for conf in instance['configurations']:
+    for conf in instance.get('configurations', []):
         params : Dict[str, Any] = {}
         if conf == "Enable password authentication" or conf == "noVNC":
             if password is None:

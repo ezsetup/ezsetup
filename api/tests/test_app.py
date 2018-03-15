@@ -39,8 +39,8 @@ TOPO = {
         {'id': 0, 'type': 'NetworkNode', 'name': 'Network0', 'x': 409.015625, 'y': 105, 'cidr': '192.168.1.0/24', 'gid': '3'}
     ],
     'links': [
-        {'id': 0, 'type': 'NetworkLink', 'name': 'Link0', 'network': {'gid': '3'}, 'target': {'gid': '1'}, 'ip': '192.168.1.11'},
-        {'id': 1, 'type': 'NetworkLink', 'name': 'Link1', 'network': {'gid': '3'}, 'target': {'gid': '1'}, 'networkId': 0, 'instanceId': 1, 'ip': '192.168.1.12'}
+        {'id': 0, 'type': 'NetworkLink', 'name': 'Link0', 'network': {'gid': '3'}, 'target': {'type': 'instance','gid': '1'}, 'ip': '192.168.1.11'},
+        {'id': 1, 'type': 'NetworkLink', 'name': 'Link1', 'network': {'gid': '3'}, 'target': {'type': 'instance', 'gid': '2'}, 'ip': '192.168.1.12'}
     ]
 }
 
@@ -253,13 +253,16 @@ class LabTestCase(unittest.TestCase):
         assert rv.status_code == 200
 
         # assert lab is active after a while
-        timeout = 10
+        timeout = 200
         while True:
             lab = Lab.fetchone(id=self.lab_id)
             if lab.status == 'active':
                 break
-            time.sleep(5)
-            timeout = timeout - 5
+            print(lab.status)
+            print(lab.error_msgs)
+            assert lab.status != 'deployfailed'
+            time.sleep(20)
+            timeout = timeout - 20
             if timeout <= 0:
                 break
         assert timeout > 0, "Deployment timeout"
@@ -275,13 +278,16 @@ class LabTestCase(unittest.TestCase):
                 'Authorization': self.token
             })
                 
-        timeout = 10
+        timeout = 200
         while True:
             lab = Lab.fetchone(id=self.lab_id)
             if lab is None:
                 break
-            time.sleep(5)
-            timeout = timeout - 5
+            print(lab.status)
+            print(lab.error_msgs)
+            assert lab.status != 'destroyfailed'
+            time.sleep(20)
+            timeout = timeout - 20
             if timeout <= 0:
                 break
         assert timeout > 0, "Deletion timeout"

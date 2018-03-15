@@ -1,1 +1,1 @@
-ALTER TABLE public.scenarios ADD sg_rules TEXT[] DEFAULT array[]::TEXT[];
+ALTER TABLE public.scenarios ADD COLUMN IF NOT EXISTS sg_rules TEXT[] DEFAULT array[]::TEXT[];
