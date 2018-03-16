@@ -325,8 +325,10 @@ def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
     try:
         cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
         sec_group_id = queue.fetch_job(create_sec_group_job_id).result
-        # Prepare and save the instance models
-        for s in topo.get('routers', []):
+
+        routers = topo['routers']
+
+        for s in routers:
             links = _extract_links(s, topo)
             configurations, password = _extract_configurations(lab, lab_slice, s, topo)
 
