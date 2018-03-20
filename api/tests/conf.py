@@ -33,7 +33,8 @@ TOPO = {
     'links': [
         {'id': 0, 'type': 'NetworkLink', 'name': 'Link0', 'network': {'gid': '3'}, 'target': {'type': 'instance','gid': '1'}, 'ip': '192.168.1.11'},
         {'id': 1, 'type': 'NetworkLink', 'name': 'Link1', 'network': {'gid': '3'}, 'target': {'type': 'instance', 'gid': '2'}, 'ip': '192.168.1.12'}
-    ]
+    ],
+    'routers': []
 }
 
 CLOUD_DETAIL = None

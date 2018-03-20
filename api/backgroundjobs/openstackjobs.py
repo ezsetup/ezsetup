@@ -5,43 +5,50 @@ import re
 from rq.job import JobStatus
 from models import Slice, Lab, CloudConfig, NetworkNode, Instance, Router
 from auth.models import User
-from cloudops import CloudOps
+from cloudops import Openstack
 from typing import Dict, Any, List, Tuple
 from . import queue
 from api.lab.helpers import randomword
 
 
-def create_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice, scenario):
+def create_sec_group(cloudconfig: CloudConfig, lab_id, lab_slice: Slice, scenario):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
-        sec_group_id = cloudops.ex_create_security_group(lab_slice.name)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
+
+        sec_group_id = openstack.create_security_group(lab_slice.name)
         new_cloud_attrs = lab_slice.cloud_attrs
         new_cloud_attrs['sec_group_id'] = sec_group_id
         lab_slice.update(cloud_attrs=new_cloud_attrs.value)
         for rule in scenario.sg_rules:
-            _add_security_group_rule(cloudops, sec_group_id, rule)
+            _add_security_group_rule(openstack, sec_group_id, rule)
         return sec_group_id
     except Exception as ex:
         error_type = 'Create security group error'
         error_msgs = [error_type + ': ' + str(ex)]
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
-def delete_sec_group(cloudconfig: CloudConfig, lab: Lab, lab_slice: Slice):
+def delete_sec_group(cloudconfig: CloudConfig, lab_id, lab_slice: Slice):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         if lab_slice.cloud_attrs.get('sec_group_id') is not None:
-            cloudops.ex_delete_security_group(
-                lab_slice.name, lab_slice.cloud_attrs['sec_group_id'])
+            openstack.delete_security_group(
+                lab_slice.name)
     except Exception as ex:
         error_type = 'Delete security group error'
         error_msgs = [error_type + ': ' + str(ex)]
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
-def create_vpc(cloudconfig: CloudConfig, lab: Lab):
+# TODO: move this to awsjobs.py
+def create_vpc(cloudconfig: CloudConfig, lab_id):
+    """
     try:
         if cloudconfig.provider == 'AWS':
             cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
@@ -56,11 +63,15 @@ def create_vpc(cloudconfig: CloudConfig, lab: Lab):
         error_type = 'Create AWS VPC error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
+    """
+    pass
 
-def delete_vpc(cloudconfig: CloudConfig, lab: Lab):
+# TODO: move this to awsjobs.py
+def delete_vpc(cloudconfig: CloudConfig, lab_id):
+    """
     try:
         if cloudconfig.provider == 'AWS':
             cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
@@ -69,12 +80,14 @@ def delete_vpc(cloudconfig: CloudConfig, lab: Lab):
         error_type = 'Delete AWS VPC error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
+    """
+    pass
     
 
-def set_lab_active(lab: Lab, last_jobs_ids):
+def set_lab_active(lab_id, last_jobs_ids):
     if len(last_jobs_ids) > 0:
         timeout = 20
         while True:
@@ -90,16 +103,17 @@ def set_lab_active(lab: Lab, last_jobs_ids):
             timeout = timeout - 5
             if timeout == 0:
                 break
+
+        lab = Lab.fetchone(id=lab_id)
         if timeout == 0:
             error_type = 'Time out error when trying to set lab active'
             error_msgs = [error_type]
 
-            lab = Lab.fetchone(id=lab.id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         else:
             lab.update(status='active', error_msgs=[])
 
-def delete_lab(lab: Lab, last_jobs_ids):
+def delete_lab(lab_id, last_jobs_ids):
     if len(last_jobs_ids) > 0:
         timeout = 30
         while True:
@@ -116,33 +130,34 @@ def delete_lab(lab: Lab, last_jobs_ids):
             timeout = timeout - 5
             if timeout == 0:
                 break
+        lab = Lab.fetchone(id=lab_id)
         if timeout == 0:
             error_type = 'Time out error when trying to delete lab'
             error_msgs = [error_type]
-            lab = Lab.fetchone(id=lab.id)
             lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         else:
             lab.delete()
 
 class CreateNetThread(Thread):
-    def __init__(self, cloudops, lab, net):
+    def __init__(self, openstack, net):
         Thread.__init__(self)
-        self.cloudops = cloudops
+        self.openstack = openstack 
         self.net = net
-        self.lab = lab
     def run(self):
-        attrs = self.cloudops.create_network(self.net.name, self.net.cidr)
+        attrs = self.openstack.create_network(self.net.name, self.net.cidr)
         self.net.update(cloud_attrs=attrs, status='active')
 
-def create_networks(cloudconfig, lab, lab_slice, topo):
+def create_networks(cloudconfig, lab_id, lab_slice, topo):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         threads = []
         for n in topo['networks']:
             new_net = NetworkNode.insert(
                 name=n['name'], cidr=n['cidr'], status='deploying', x=n['x'], y=n['y'],
                 slice_id=lab_slice.id, gid=n['gid'])
-            t = CreateNetThread(cloudops, lab, new_net)
+            t = CreateNetThread(openstack, new_net)
             t.start()
             threads.append(t)
 
@@ -152,29 +167,31 @@ def create_networks(cloudconfig, lab, lab_slice, topo):
         error_type = 'Create networks error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 class DeleteNetworkThread(Thread):
-    def __init__(self, cloudops, lab, net):
+    def __init__(self, openstack, net):
         Thread.__init__(self)
-        self.cloudops = cloudops
-        self.lab = lab
+        self.openstack = openstack 
         self.net = net
     def run(self):
         if self.net.status == 'active':
             self.net.update(status='destroying')
-            self.cloudops.delete_network(self.net.cloud_attrs)
+            self.openstack.delete_network(self.net.cloud_attrs['id'], 
+                    self.net.cloud_attrs['router_id'])
             self.net.delete()
 
-def delete_networks(cloudconfig, lab, lab_slice):
+def delete_networks(cloudconfig, lab_id, lab_slice):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         networks = NetworkNode.fetchall(slice_id=lab_slice.id)
         threads = []
         for net in networks:
-            t = DeleteNetworkThread(cloudops, lab, net)
+            t = DeleteNetworkThread(openstack, net)
             t.start()
             threads.append(t)
         for t in threads:
@@ -183,15 +200,15 @@ def delete_networks(cloudconfig, lab, lab_slice):
         error_type = 'Delete networks error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 class CreateInstanceThread(Thread):
-    def __init__(self, cloudops, lab, instance, lab_slice, sec_group_id):
+    def __init__(self, openstack, lab_id, instance, lab_slice, sec_group_id):
         Thread.__init__(self)
-        self.lab = lab
-        self.cloudops = cloudops
+        self.lab_id = lab_id
+        self.openstack = openstack
         self.instance = instance
         self.lab_slice = lab_slice
         self.sec_group_id = sec_group_id
@@ -205,25 +222,27 @@ class CreateInstanceThread(Thread):
                 nets.append(net)
 
             instance = self.instance
-            public_ip, attrs = self.cloudops.create_instance(
+            public_ip, attrs = self.openstack.create_instance(
                 instance.name, nets, ips, instance.configurations, self.sec_group_id, instance.image, instance.flavor)
             instance.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
         except Exception as ex:
             error_type = 'Create instances error'
             error_msgs = [error_type + ': ' + str(ex)]
 
-            lab = Lab.fetchone(id=self.lab.id)
+            lab = Lab.fetchone(id=self.lab_id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
             raise Exception(error_type + str(error_msgs))
 
-def create_instances(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
+def create_instances(cloudconfig, lab_id, lab_slice, topo, create_sec_group_job_id):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         sec_group_id = queue.fetch_job(create_sec_group_job_id).result
         # Prepare and save the instance models
         for s in topo['instances']:
             links = _extract_links(s, topo)
-            configurations, password = _extract_configurations(lab, lab_slice, s, topo)
+            configurations, password = _extract_configurations(lab_id, lab_slice, s, topo)
 
             Instance.insert(
                 name=s['name'],
@@ -239,7 +258,7 @@ def create_instances(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id)
         # Actually deployment
         threads = []
         for instance in Instance.fetchall(slice_id=lab_slice.id):
-            t = CreateInstanceThread(cloudops, lab, instance, lab_slice, sec_group_id)
+            t = CreateInstanceThread(openstack, lab_id, instance, lab_slice, sec_group_id)
             t.start()
             threads.append(t)
 
@@ -250,37 +269,39 @@ def create_instances(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id)
         error_type = 'Create instances error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 class DeleteInstanceThread(Thread):
-    def __init__(self, cloudops, lab, instance):
+    def __init__(self, openstack, lab_id, instance):
         Thread.__init__(self)
-        self.lab = lab
+        self.lab_id = lab_id
         self.instance = instance
-        self.cloudops = cloudops
+        self.openstack = openstack 
 
     def run(self):
         try:
             if self.instance.status == 'active':
                 self.instance.update(status='destroying')
-                self.cloudops.delete_instance(self.instance.cloud_attrs)
+                self.openstack.delete_instance(self.instance.cloud_attrs['id'])
                 self.instance.delete()
         except Exception as ex:
             error_type = 'Delete instances error'
             error_msgs = [error_type + ': ' + str(ex)]
             
-            lab = Lab.fetchone(id=self.lab.id)
+            lab = Lab.fetchone(id=self.lab_id)
             lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
 
-def delete_instances(cloudconfig, lab, lab_slice):
+def delete_instances(cloudconfig, lab_id, lab_slice):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         instances = Instance.fetchall(slice_id=lab_slice.id)
         threads = []
         for instance in instances:
-            t = DeleteInstanceThread(cloudops, lab, instance)
+            t = DeleteInstanceThread(openstack, lab_id, instance)
             t.start()
             threads.append(t)
         for t in threads:
@@ -289,15 +310,15 @@ def delete_instances(cloudconfig, lab, lab_slice):
         error_type = 'Delete instances error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 class CreateRouterThread(Thread):
-    def __init__(self, cloudops, lab, router, lab_slice, sec_group_id):
+    def __init__(self, openstack, lab_id, router, lab_slice, sec_group_id):
         Thread.__init__(self)
-        self.lab = lab
-        self.cloudops = cloudops
+        self.lab_id = lab_id
+        self.openstack = openstack
         self.router = router
         self.lab_slice = lab_slice
         self.sec_group_id = sec_group_id
@@ -311,26 +332,28 @@ class CreateRouterThread(Thread):
                 nets.append(net)
 
             router = self.router
-            public_ip, attrs = self.cloudops.create_instance(
+            public_ip, attrs = self.openstack.create_router(
                 router.name, nets, ips, router.configurations, self.sec_group_id, router.image, router.flavor)
             router.update(status='active', public_ip=public_ip, cloud_attrs=attrs)
         except Exception as ex:
             error_type = 'Create routers error'
             error_msgs = [error_type + ': ' + str(ex)]
 
-            lab = Lab.fetchone(id=self.lab.id)
+            lab = Lab.fetchone(id=self.lab_id)
             lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
 
-def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
+def create_routers(cloudconfig, lab_id, lab_slice, topo, create_sec_group_job_id):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         sec_group_id = queue.fetch_job(create_sec_group_job_id).result
 
         routers = topo['routers']
 
         for s in routers:
             links = _extract_links(s, topo)
-            configurations, password = _extract_configurations(lab, lab_slice, s, topo)
+            configurations, password = _extract_configurations(lab_id, lab_slice, s, topo)
 
             Router.insert(
                 name=s['name'],
@@ -346,7 +369,7 @@ def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
         # Actually deployment
         threads = []
         for router in Router.fetchall(slice_id=lab_slice.id):
-            t = CreateRouterThread(cloudops, lab, router, lab_slice, sec_group_id)
+            t = CreateRouterThread(openstack, lab_id, router, lab_slice, sec_group_id)
             t.start()
             threads.append(t)
 
@@ -357,37 +380,39 @@ def create_routers(cloudconfig, lab, lab_slice, topo, create_sec_group_job_id):
         error_type = 'Create routers error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 class DeleteRouterThread(Thread):
-    def __init__(self, cloudops, lab, router):
+    def __init__(self, openstack, lab_id, router):
         Thread.__init__(self)
         self.router = router
-        self.cloudops = cloudops
-        self.lab = lab
+        self.openstack = openstack
+        self.lab_id = lab_id
 
     def run(self):
         try:
             if self.router.status == 'active':
                 self.router.update(status='destroying')
-                self.cloudops.delete_instance(self.router.cloud_attrs)
+                self.openstack.delete_instance(self.router.cloud_attrs['id'])
                 self.router.delete()
         except Exception as ex:
             error_type = 'Delete routers error'
             error_msgs = [error_type + ': ' + str(ex)]
 
-            lab = Lab.fetchone(id=self.lab.id)
+            lab = Lab.fetchone(id=self.lab_id)
             lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
 
-def delete_routers(cloudconfig, lab, lab_slice):
+def delete_routers(cloudconfig, lab_id, lab_slice):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         routers = Router.fetchall(slice_id=lab_slice.id)
         threads = []
         for router in routers:
-            t = DeleteRouterThread(cloudops, lab, router)
+            t = DeleteRouterThread(openstack, lab_id, router)
             t.start()
             threads.append(t)
         for t in threads:
@@ -396,13 +421,15 @@ def delete_routers(cloudconfig, lab, lab_slice):
         error_type = 'Delete routers error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='destroyfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
-def update_allowed_address_pairs(cloudconfig, lab, lab_slice, topo):
+def update_allowed_address_pairs(cloudconfig, lab_id, lab_slice, topo):
     try:
-        cloudops = CloudOps(cloudconfig.provider, cloudconfig.detail)
+        openstack = Openstack(
+            cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
+            cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
         ip_cidr_regex = '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4]' \
                         '[0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-' \
                         'f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-' \
@@ -436,30 +463,29 @@ def update_allowed_address_pairs(cloudconfig, lab, lab_slice, topo):
                         address_pair['mac_address'] = mac_address
                     address_pairs.append(address_pair)
             if address_pairs:
-                cloudops.update_allowed_address_pairs(network, device.cloud_attrs['id'], address_pairs)
+                openstack.update_allowed_address_pairs(network, device.cloud_attrs['id'], address_pairs)
 
     except Exception as ex:
         error_type = 'Update allowed address pairs error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_idid)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
-def set_slice_active(lab_slice):
+def set_slice_active(lab_id, lab_slice):
     try:
         lab_slice.update(status='active')
     except Exception as ex:
         error_type = 'Set slice active error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-
-        lab = Lab.fetchone(id=lab.id)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
 
-def _add_security_group_rule(cloudops: CloudOps, security_group_id, rule: str):
+def _add_security_group_rule(openstack: Openstack, security_group_id, rule: str):
     regex = '^\s*(ingress|egress)\s+(ipv4|ipv6)\s+([a-z]+)\s*(?:(\d+(?:' \
             '-\d+)?)?(?:\s|$)+)?(?:((?:(?:(?:[0-9A-Fa-f]{1,4}:){7}(?:[0' \
             '-9A-Fa-f]{1,4}|:))|(?:(?:[0-9A-Fa-f]{1,4}:){6}(?::[0-9A-Fa' \
@@ -516,7 +542,7 @@ def _add_security_group_rule(cloudops: CloudOps, security_group_id, rule: str):
         break
 
     if query is not None:
-        cloudops.ex_create_security_group_rule(security_group_id, **query)
+        openstack.create_security_group_rule(security_group_id, **query)
 
 def _extract_links(instance: Dict[str, Any], topo: Dict[str, Any]) -> List:
     """extract links attached to an instance base on the topology"""
@@ -527,11 +553,13 @@ def _extract_links(instance: Dict[str, Any], topo: Dict[str, Any]) -> List:
     return links
 
 
-def _extract_configurations(lab: Lab, slice: Slice, instance: Dict[str, Any], topo: Dict[str, Any]) \
+def _extract_configurations(lab_id, slice: Slice, instance: Dict[str, Any], topo: Dict[str, Any]) \
         -> Tuple[List[Dict[str, Any]], str]:
     """extract configurations of an instance base on the topology
     the extracted configurations is a dict of configuration name ('name') and and rendering parameters ('params')
     rendering parameters can be None"""
+
+    lab = Lab.fetchone(id=lab_id)
     configurations = []
 
     # configurations.append({"name": "staticroute", "params": _extract_static_route(instance, topo)})

@@ -46,7 +46,6 @@ const router = new Router({
       path: '/labs',
       component: LabsManagement,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -54,7 +53,6 @@ const router = new Router({
       path: '/users',
       component: UsersManagement,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -63,7 +61,6 @@ const router = new Router({
       name: 'NewUser',
       component: UserCreation,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -71,7 +68,6 @@ const router = new Router({
       path: '/scenarios',
       component: ScenariosManagement,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -80,7 +76,6 @@ const router = new Router({
       name: 'NewScenario',
       component: ScenarioEditor,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -89,7 +84,6 @@ const router = new Router({
       name: 'ScenarioEditor',
       component: ScenarioEditor,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -98,7 +92,6 @@ const router = new Router({
       name: 'NewLab',
       component: NewLab,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },
@@ -107,7 +100,6 @@ const router = new Router({
       name: 'Lab',
       component: Lab,
       meta: {
-        rootRequired: true,
         authRequired: true
       }
     },

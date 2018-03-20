@@ -8,7 +8,7 @@ from auth.models import User
 from api import permission_required
 from auth.decorators import login_required
 
-from backgroundjobs import queue, jobs
+from backgroundjobs import queue, openstackjobs
 
 from raven import Client
 # Use sentry to send manually caught exceptions
@@ -70,19 +70,12 @@ class Labs(FlaskView):
     @route('/<int:id>/deploy', methods=['POST'])
     def deploy(self, id):
         cloudconfig_id = request.get_json()['cloudConfigId']
+        cloudconfig = CloudConfig.fetchone(id=cloudconfig_id)
+
         users = request.get_json()['users']
 
         lab = Lab.fetchone(id=id)
-        cloudconfig = CloudConfig.fetchone(id=cloudconfig_id)
-
         lab.update(status='deploying')
-
-        first_job = None
-        last_jobs = []
-        last_jobs_ids = []
-
-        if cloudconfig.provider == 'AWS':
-            first_job = queue.enqueue(jobs.create_vpc, cloudconfig, lab)
 
         """Chances are you are redeploying a lab, whose slices are already created"""
         slices = Slice.fetchall(lab_id=lab.id)
@@ -94,36 +87,9 @@ class Labs(FlaskView):
                                          name=lab.name + ' / slice_' + str(index), cloud_attrs={})
                 slices.append(new_slice)
 
-
-        for lab_slice in slices:
-            if lab_slice.status == 'deploying':
-                scenario = Scenario.fetchone(id=lab.scenario_id)
-                topo = scenario.topo
-                create_sec_group_job = queue.enqueue(jobs.create_sec_group, cloudconfig, 
-                        lab, lab_slice, scenario, depends_on=first_job)
-
-                create_networks_job = queue.enqueue(jobs.create_networks, cloudconfig,
-                        lab, lab_slice, topo, depends_on=create_sec_group_job)
-
-                create_sec_group_job_id = create_sec_group_job.get_id()
-                create_instances_job = queue.enqueue(jobs.create_instances, cloudconfig,
-                        lab, lab_slice, topo, create_sec_group_job_id, depends_on=create_networks_job)
-
-                create_routers_job = queue.enqueue(jobs.create_routers, cloudconfig,
-                        lab, lab_slice, topo, create_sec_group_job_id, depends_on=create_instances_job)
-
-                update_allowed_address_pairs_job = queue.enqueue(jobs.update_allowed_address_pairs, cloudconfig,
-                        lab, lab_slice, topo, depends_on=create_routers_job)
-
-                set_slice_active_job = queue.enqueue(jobs.set_slice_active,
-                        lab_slice, depends_on=update_allowed_address_pairs_job)
-
-                last_jobs.append(set_slice_active_job)
-                last_jobs_ids.append(set_slice_active_job.get_id())
-
-        queue.enqueue(jobs.set_lab_active, lab, last_jobs_ids, job_id='set_lab_active', 
-                depends_on=last_jobs[-1])
-        return jsonify(message="ok")
+        scenario = Scenario.fetchone(id=lab.scenario_id)
+        if cloudconfig.provider == 'Openstack':
+            return _deploy_openstack(id, cloudconfig, slices, scenario)
 
     @route('/<int:id>/destroy', methods=['POST'])
     def destroy(self, id):
@@ -131,29 +97,65 @@ class Labs(FlaskView):
         lab.update(status='destroying')
         cloudconfig = CloudConfig.fetchone(lab_id=id)
 
-        last_jobs = []
-        last_jobs_ids = []
+        if cloudconfig.provider == 'Openstack':
+            return _destroy_openstack(id, cloudconfig)
+        
+def _deploy_openstack(lab_id, cloudconfig, slices, scenario):
+    first_job = None
+    last_jobs = []
+    last_jobs_ids = []
 
-        for lab_slice in Slice.fetchall(lab_id=lab.id):
+    topo = scenario.topo
 
-            delete_routers_job = queue.enqueue(jobs.delete_routers, cloudconfig,
-                    lab, lab_slice)
+    for lab_slice in slices:
+        if lab_slice.status == 'deploying':
+            create_sec_group_job = queue.enqueue(openstackjobs.create_sec_group, cloudconfig, 
+                    lab_id, lab_slice, scenario, depends_on=first_job)
 
-            delete_instances_job = queue.enqueue(jobs.delete_instances, cloudconfig,
-                    lab, lab_slice, depends_on=delete_routers_job)
+            create_networks_job = queue.enqueue(openstackjobs.create_networks, cloudconfig,
+                    lab_id, lab_slice, topo, depends_on=create_sec_group_job)
 
-            delete_networks_job = queue.enqueue(jobs.delete_networks, cloudconfig,
-                    lab, lab_slice, depends_on=delete_instances_job)
+            create_sec_group_job_id = create_sec_group_job.get_id()
+            create_instances_job = queue.enqueue(openstackjobs.create_instances, cloudconfig,
+                    lab_id, lab_slice, topo, create_sec_group_job_id, depends_on=create_networks_job)
 
-            # Destroy security group
-            delete_sec_group_job = queue.enqueue(jobs.delete_sec_group, cloudconfig,
-                    lab, lab_slice, depends_on=delete_networks_job)
+            create_routers_job = queue.enqueue(openstackjobs.create_routers, cloudconfig,
+                    lab_id, lab_slice, topo, create_sec_group_job_id, depends_on=create_instances_job)
 
-            last_jobs.append(delete_sec_group_job)
-            last_jobs_ids.append(delete_sec_group_job.get_id())
+            update_allowed_address_pairs_job = queue.enqueue(openstackjobs.update_allowed_address_pairs, cloudconfig,
+                    lab_id, lab_slice, topo, depends_on=create_routers_job)
 
-        if cloudconfig.provider == 'AWS':
-            delete_vpc_job = queue.enqueue(jobs.delete_vpc, cloudconfig, lab)
+            set_slice_active_job = queue.enqueue(openstackjobs.set_slice_active,
+                    lab_id, lab_slice, depends_on=update_allowed_address_pairs_job)
 
-        queue.enqueue(jobs.delete_lab, lab, last_jobs_ids, depends_on=last_jobs[-1])
-        return jsonify(message="ok")
+            last_jobs.append(set_slice_active_job)
+            last_jobs_ids.append(set_slice_active_job.get_id())
+
+    queue.enqueue(openstackjobs.set_lab_active, lab_id, last_jobs_ids, 
+            depends_on=last_jobs[-1])
+    return jsonify(message="ok")
+
+def _destroy_openstack(lab_id, cloudconfig):
+    last_jobs = []
+    last_jobs_ids = []
+
+    for lab_slice in Slice.fetchall(lab_id=lab_id):
+
+        delete_routers_job = queue.enqueue(openstackjobs.delete_routers, cloudconfig,
+                lab_id, lab_slice)
+
+        delete_instances_job = queue.enqueue(openstackjobs.delete_instances, cloudconfig,
+                lab_id, lab_slice, depends_on=delete_routers_job)
+
+        delete_networks_job = queue.enqueue(openstackjobs.delete_networks, cloudconfig,
+                lab_id, lab_slice, depends_on=delete_instances_job)
+
+        # Destroy security group
+        delete_sec_group_job = queue.enqueue(openstackjobs.delete_sec_group, cloudconfig,
+                lab_id, lab_slice, depends_on=delete_networks_job)
+
+        last_jobs.append(delete_sec_group_job)
+        last_jobs_ids.append(delete_sec_group_job.get_id())
+
+    queue.enqueue(openstackjobs.delete_lab, lab_id, last_jobs_ids, depends_on=last_jobs[-1])
+    return jsonify(message="ok")

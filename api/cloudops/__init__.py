@@ -1,6 +1,8 @@
 from enum import Enum
 from time import sleep
+from datetime import datetime
 import base64
+from threading import Lock
 
 from typing import Tuple, Optional
 
@@ -12,6 +14,7 @@ from botocore.exceptions import ClientError
 
 from cloudops.configurations import generate_userdata
 
+mutex = Lock()
 
 class CloudProvider(Enum):
     OPENSTACK = 'Openstack'
@@ -296,11 +299,12 @@ class Openstack(object):
         return ret
 
 
-    def create_instance(self, name, networks, ips, user_data, sec_group_id, image_name, flavor_dict: dict) -> Tuple[str, object]:
+    def create_instance(self, name, networks, ips, configurations, sec_group_id, image_name, flavor_dict: dict) -> Tuple[str, object]:
         """Return (public_ip, cloud_attrs)"""
         conn = self.conn
         image = conn.compute.find_image(image_name)
-        # TODO: implement log stream, and show error log if no image found
+
+        user_data = generate_userdata(configurations)
 
         flavor = self._find_flavor(ram=flavor_dict['ram'])
 
@@ -331,26 +335,36 @@ class Openstack(object):
         sec_group = conn.network.find_security_group(sec_group_id)
         conn.compute.add_security_group_to_server(instance, sec_group)
 
-        # available ips that are DOWN a.k.a not being used
-        ext_net = conn.network.find_network('ext-net')
-        available_ips = conn.network.ips(
-            floating_network_id=ext_net.id, project_id=project_id, status='DOWN')
-        ip = next(available_ips, None)
-        if ip is None:
-            ip = conn.network.create_ip(
-                floating_network_id=ext_net.id, project_id=project_id)
-        conn.compute.add_floating_ip_to_server(
-            instance, ip.floating_ip_address)
+        with mutex:
+            # available ips that are DOWN a.k.a not being used
+            ext_net = conn.network.find_network('ext-net')
+            available_ips = conn.network.ips(
+                floating_network_id=ext_net.id, project_id=project_id, status='DOWN')
+            floating_ip = next(available_ips, None)
+            if floating_ip is None:
+                floating_ip = conn.network.create_ip(
+                    floating_network_id=ext_net.id, project_id=project_id)
+            conn.compute.add_floating_ip_to_server(
+                instance, floating_ip.floating_ip_address)
+            
+            # wait until the ip is up
+            while floating_ip.status != 'ACTIVE':
+                floating_ip = conn.network.get_ip(floating_ip)
+                sleep(5)
 
-        return ip.floating_ip_address, {
+            print(datetime.now())
+
+        return floating_ip.floating_ip_address, {
             'provider': 'Openstack',
             'id': instance.id
         }
 
-    def create_router(self, name, networks, ips, user_data, sec_group_id, image_name: str, flavor_dict: dict)-> Tuple[str, object]:
+    def create_router(self, name, networks, ips, configurations, sec_group_id, image_name: str, flavor_dict: dict)-> Tuple[str, object]:
         conn = self.conn
         image = conn.compute.find_image(image_name)
-        # TODO: log error to log stream if image is None
+
+        configurations.append("shorewall")
+        user_data = generate_userdata(configurations)
 
         flavor = self._find_flavor(ram=flavor_dict['ram'])
 
@@ -382,16 +396,22 @@ class Openstack(object):
         sec_group = conn.network.find_security_group(sec_group_id)
         conn.compute.add_security_group_to_server(instance, sec_group)
 
-        # available ips that are DOWN a.k.a not being used
-        ext_net = conn.network.find_network('ext-net')
-        available_ips = conn.network.ips(
-            floating_network_id=ext_net.id, project_id=project_id, status='DOWN')
-        float_ip = next(available_ips, None)
-        if float_ip is None:
-            float_ip = conn.network.create_ip(
-                floating_network_id=ext_net.id, project_id=project_id)
-        conn.compute.add_floating_ip_to_server(
-            instance, float_ip.floating_ip_address)
+        with mutex:
+            # available ips that are DOWN a.k.a not being used
+            ext_net = conn.network.find_network('ext-net')
+            available_ips = conn.network.ips(
+                floating_network_id=ext_net.id, project_id=project_id, status='DOWN')
+            float_ip = next(available_ips, None)
+            if float_ip is None:
+                float_ip = conn.network.create_ip(
+                    floating_network_id=ext_net.id, project_id=project_id)
+            conn.compute.add_floating_ip_to_server(
+                instance, float_ip.floating_ip_address)
+
+            # wait until the ip is up
+            while float_ip.status != 'ACTIVE':
+                float_ip = conn.network.get_ip(float_ip)
+                sleep(5)
 
         # Allow every other net on a port
         for net, ip in zip(networks, ips):
