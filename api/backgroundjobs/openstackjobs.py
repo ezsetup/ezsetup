@@ -430,6 +430,7 @@ def update_allowed_address_pairs(cloudconfig, lab_id, lab_slice, topo):
         openstack = Openstack(
             cloudconfig.detail['openstackAuthURL'], cloudconfig.detail['openstackProject'],
             cloudconfig.detail['openstackUser'], cloudconfig.detail['openstackPassword'])
+        mac_regex = '^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$'
         ip_cidr_regex = '^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4]' \
                         '[0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)|(([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-' \
                         'f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-' \
@@ -469,7 +470,7 @@ def update_allowed_address_pairs(cloudconfig, lab_id, lab_slice, topo):
         error_type = 'Update allowed address pairs error'
         error_msgs = [error_type + ': ' + str(ex)]
 
-        lab = Lab.fetchone(id=lab_idid)
+        lab = Lab.fetchone(id=lab_id)
         lab.update(status='deployfailed', error_msgs = lab.error_msgs + error_msgs)
         raise Exception(error_type) # Raise exception to not execute the next job in the dependency link
 
