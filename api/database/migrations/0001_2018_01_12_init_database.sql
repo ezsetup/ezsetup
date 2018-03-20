@@ -944,6 +944,39 @@ ALTER TABLE assessments_id_seq OWNER TO ezsetup;
 ALTER SEQUENCE assessments_id_seq OWNED BY assessments.id;
 
 --
+-- Name: assessments id; Type: DEFAULT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments ALTER COLUMN id SET DEFAULT nextval('assessments_id_seq'::regclass);
+
+--
+-- Data for Name: assessments; Type: TABLE DATA; Schema: public; Owner: ezsetup
+--
+
+COPY assessments (id, atitle, adescription, questions, scores) FROM stdin;
+\.
+
+--
+-- Name: assessments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ezsetup
+--
+
+SELECT pg_catalog.setval('assessments_id_seq', 1, false);
+
+--
+-- Name: assessments assessments_atitle_key; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments
+    ADD CONSTRAINT assessments_atitle_key UNIQUE (atitle);
+
+--
+-- Name: assessments assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY assessments
+    ADD CONSTRAINT assessments_pkey PRIMARY KEY (id);
+
+--
 -- Name: questions; Type: TABLE; Schema: public; Owner: ezsetup
 --
 
@@ -978,36 +1011,11 @@ ALTER TABLE questions_id_seq OWNER TO ezsetup;
 
 ALTER SEQUENCE questions_id_seq OWNED BY questions.id;
 
-
 --
--- Name: assessments id; Type: DEFAULT; Schema: public; Owner: ezsetup
---
-
-ALTER TABLE ONLY assessments ALTER COLUMN id SET DEFAULT nextval('assessments_id_seq'::regclass);
-
---
--- Name: assessments id; Type: DEFAULT; Schema: public; Owner: ezsetup
+-- Name: questions id; Type: DEFAULT; Schema: public; Owner: ezsetup
 --
 
 ALTER TABLE ONLY questions ALTER COLUMN id SET DEFAULT nextval('questions_id_seq'::regclass);
-
-
-
---
--- Data for Name: assessments; Type: TABLE DATA; Schema: public; Owner: ezsetup
---
-
-COPY assessments (id, atitle, adescription, questions, scores) FROM stdin;
-\.
-
-
---
--- Name: assessments_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ezsetup
---
-
-SELECT pg_catalog.setval('assessments_id_seq', 1, false);
-
-
 
 --
 -- Data for Name: questions; Type: TABLE DATA; Schema: public; Owner: ezsetup
@@ -1023,30 +1031,12 @@ COPY questions (id, qkind, qtitle, qtext, answers, correct, feedback) FROM stdin
 
 SELECT pg_catalog.setval('questions_id_seq', 1, false);
 
-
---
--- Name: assessments assessments_atitle_key; Type: CONSTRAINT; Schema: public; Owner: ezsetup
---
-
-ALTER TABLE ONLY assessments
-    ADD CONSTRAINT assessments_atitle_key UNIQUE (atitle);
-
-
---
--- Name: assessments assessments_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
---
-
-ALTER TABLE ONLY assessments
-    ADD CONSTRAINT assessments_pkey PRIMARY KEY (id);
-
-
 --
 -- Name: questions questions_qtitle_key; Type: CONSTRAINT; Schema: public; Owner: ezsetup
 --
 
 ALTER TABLE ONLY questions
     ADD CONSTRAINT questions_qtitle_key UNIQUE (qtitle);
-
 
 --
 -- Name: questions questions_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
@@ -1055,7 +1045,69 @@ ALTER TABLE ONLY questions
 ALTER TABLE ONLY questions
     ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
 
+
+
+--
+-- Name: reports; Type: TABLE; Schema: public; Owner: ezsetup
+--
+
+CREATE TABLE reports (
+	id integer NOT NULL,
+	user text,
+  lab text,
+  answers text[],
+  points text[],
+  starttime text,
+  endtime text
+);
+
+ALTER TABLE reports OWNER TO ezsetup;
+
+--
+-- Name: reports_id_seq; Type: SEQUENCE; Schema: public; Owner: ezsetup
+--
+
+CREATE SEQUENCE reports_id_seq
+	START WITH 1
+	INCREMENT BY 1
+	NO MINVALUE
+	NO MAXVALUE
+	CACHE 1;
+
+ALTER TABLE reports_id_seq OWNER TO ezsetup;
+
+--
+-- Name: reports_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: ezsetup
+--
+
+ALTER SEQUENCE reports_id_seq OWNED BY reports.id;
+
+--
+-- Name: reports id; Type: DEFAULT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY reports ALTER COLUMN id SET DEFAULT nextval('reports_id_seq'::regclass);
+
+--
+-- Data for Name: reports; Type: TABLE DATA; Schema: public; Owner: ezsetup
+--
+
+COPY reports (id, user, lab, answers, points, starttime, endtime) FROM stdin;
+\.
+
+--
+-- Name: reports_id_seq; Type: SEQUENCE SET; Schema: public; Owner: ezsetup
+--
+
+SELECT pg_catalog.setval('reports_id_seq', 1, false);
+
+--
+-- Name: reports reports_pkey; Type: CONSTRAINT; Schema: public; Owner: ezsetup
+--
+
+ALTER TABLE ONLY reports
+    ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
+
 --
 -- PostgreSQL database dump complete
 --
-

@@ -362,6 +362,32 @@ function LISTQuestions (jsonOkCallback) {
   _GET('/api/questions/', jsonOkCallback)
 }
 
+function POSTReports (user, lab, answers, points, jsonOkCallback) {
+  console.log('API client - POST /api/reports/ - inputs:', user, lab, answers, points)
+  let options = {
+    headers: authHeaders(),
+    method: 'POST',
+    body: JSON.stringify({
+      'user': user,
+      'lab': lab,
+      'answers': answers,
+      'points': points
+    })
+  }
+  console.log('API client - POST /api/reports/ - body:', options.body)
+
+  fetch(API_SERVER + '/api/reports/', options)
+    .then(response => {
+      if (response.ok) {
+        response.json().then(jsonOkCallback)
+      }
+    })
+}
+
+function LISTReports (jsonOkCallback) {
+  _GET('/api/reports/', jsonOkCallback)
+}
+
 export {
   login,
   GETUserSelf,
@@ -393,6 +419,7 @@ export {
   POSTAssessment,
   LISTAssessments,
   POSTQuestion,
-  LISTQuestions
-
+  LISTQuestions,
+  POSTReports,
+  LISTReports
 }

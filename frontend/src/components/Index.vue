@@ -17,6 +17,9 @@
         <li v-if="permissionGroups.includes('labs')" :class="{'is-active': this.$route.path.includes('/assessment')}">
           <router-link to="/assessment">Assessment</router-link>
         </li>
+        <li v-if="permissionGroups.includes('labs')" :class="{'is-active': this.$route.path.includes('/reports')}">
+          <router-link to="/reports">Grade Reports</router-link>
+        </li>
       </ul>
     </div>
     <router-view></router-view>

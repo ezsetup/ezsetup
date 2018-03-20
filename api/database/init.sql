@@ -113,3 +113,11 @@ create table questions (id SERIAL PRIMARY KEY,
                         correct TEXT[],
                         feedback TEXT,
                         UNIQUE (qtitle));
+
+create table reports (id SERIAL PRIMARY KEY,
+                      user TEXT,
+                      lab TEXT,
+                      answers TEXT[],
+                      points TEXT[],
+                      starttime TEXT,
+                      endtime TEXT)

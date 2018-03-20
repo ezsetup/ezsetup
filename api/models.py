@@ -133,3 +133,14 @@ class Question(Model):
 
     class Meta:
         table = 'questions'
+
+class Report(Model):
+    user = TextField()
+    lab = TextField()
+    answers = TextField()
+    points = TextField()
+    starttime = TextField()
+    endtime = TextField()
+
+    class Meta:
+        table = 'reports'
