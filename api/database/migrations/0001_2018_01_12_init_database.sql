@@ -1053,8 +1053,8 @@ ALTER TABLE ONLY questions
 
 CREATE TABLE reports (
 	id integer NOT NULL,
-	user text,
-  lab text,
+	student text,
+  labname text,
   answers text[],
   points text[],
   starttime text,
@@ -1092,7 +1092,7 @@ ALTER TABLE ONLY reports ALTER COLUMN id SET DEFAULT nextval('reports_id_seq'::r
 -- Data for Name: reports; Type: TABLE DATA; Schema: public; Owner: ezsetup
 --
 
-COPY reports (id, user, lab, answers, points, starttime, endtime) FROM stdin;
+COPY reports (id, student, labname, answers, points, starttime, endtime) FROM stdin;
 \.
 
 --

@@ -135,8 +135,8 @@ class Question(Model):
         table = 'questions'
 
 class Report(Model):
-    user = TextField()
-    lab = TextField()
+    student = TextField()
+    labname = TextField()
     answers = TextField()
     points = TextField()
     starttime = TextField()

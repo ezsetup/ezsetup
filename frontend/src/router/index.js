@@ -20,6 +20,7 @@ import WorkSpace from '@/components/workspace/WorkSpace'
 import Assessment from '@/components/assessment/Assessment'
 import newAssessment from '@/components/assessment/newAssessment'
 import Reports from '@/components/reports/Reports'
+import TakeAssessment from '@/components/assessment/takeAssessment'
 
 import store from '@/store'
 // import Cookies from 'js-cookie'
@@ -134,6 +135,14 @@ const router = new Router({
           path: 'reports',
           component: Reports,
           name: 'Reports',
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: 'assessment',
+          component: TakeAssessment,
+          name: 'TakeAssessment',
           meta: {
             authRequired: true
           }

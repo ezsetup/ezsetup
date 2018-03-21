@@ -85,15 +85,15 @@ export default {
   name: 'newQuestion',
   data: function () {
     return {
-    addQuestion: false,
-	  qkind: '',
-	  qtitle: '',
-	  qtext: '',
-	  answers: [],
-	  correct: [],
-	  feedback: '',
-    isLoading: false,
-	}
+      addQuestion: false,
+      qkind: '',
+      qtitle: '',
+      qtext: '',
+      answers: [],
+      correct: [],
+      feedback: '',
+      isLoading: false
+	  }
   },
   methods: {
 	  submitQuestion: function() {

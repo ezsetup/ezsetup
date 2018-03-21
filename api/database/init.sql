@@ -115,8 +115,8 @@ create table questions (id SERIAL PRIMARY KEY,
                         UNIQUE (qtitle));
 
 create table reports (id SERIAL PRIMARY KEY,
-                      user TEXT,
-                      lab TEXT,
+                      student TEXT,
+                      labname TEXT,
                       answers TEXT[],
                       points TEXT[],
                       starttime TEXT,

@@ -15,13 +15,14 @@ from api.configuration import Configurations
 from api.flavor import Flavors
 from api.assessment import Assessments
 from api.question import Questions
+from api.reports import Reports
 
 app = Flask(__name__)
 app.register_blueprint(auth_blueprint, url_prefix='/auth')
 
 app.secret_key = "joifosdjfoisjiowjroijfsldjflsjfsdopoew"
 
-register(app, [Users, Scenarios, Labs, Cloudconfigs, Slices, Configurations, Flavors, Assessments, Questions], '/api')
+register(app, [Users, Scenarios, Labs, Cloudconfigs, Slices, Configurations, Flavors, Assessments, Questions, Reports], '/api')
 
 CORS(app)
 

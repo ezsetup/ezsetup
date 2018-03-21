@@ -16,8 +16,8 @@ class Reports(FlaskView):
         for report in reports:
             ret.append({
                 'id': report.id,
-                'user': report.user,
-                'lab': report.lab,
+                'student': report.student,
+                'labname': report.labname,
                 'answers': report.answers,
                 'points': report.points,
                 'starttime': report.starttime,
@@ -30,13 +30,13 @@ class Reports(FlaskView):
 
     def post(self):
         """Create new report"""
-        user = request.get_json()['user']
-        lab = request.get_json()['lab']
+        user = request.get_json()['student']
+        lab = request.get_json()['labname']
         answers = request.get_json()['answers']
         points = request.get_json()['points']
         starttime = request.get_json()['starttime']
         endtime = request.get_json()['endtime']
-        new_report = Report(user=user, lab=lab, answers=answers,
+        new_report = Report(student=student, labname=labname, answers=answers,
                                 points=points, starttime=starttime, endtime=endtime)
         try:
             new_report.save()
