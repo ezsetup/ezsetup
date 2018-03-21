@@ -11,7 +11,7 @@
         <p v-if="error" class="is-danger">{{error}}</p>
       </div>
     </div>
-    <div class="columns">
+    <div class="columns is-multiline">
       <div class="column is-3" v-for="sl in slices" v-bind:key="sl.id">
         <router-link class="box" :to="{name: 'Slice', params:{sliceId: sl.id}}">
           <p>{{ sl.name }}</p>
