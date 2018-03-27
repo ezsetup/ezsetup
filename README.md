@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/nguyendv/ezsetup.svg?style=shield&circle-token=9deee429135839cc89edb061e37530e59546d865)](https://circleci.com/gh/nguyendv/ezsetup)
+[![CircleCI](https://circleci.com/gh/ezsetup/ezsetup.svg?style=svg)](https://circleci.com/gh/ezsetup/ezsetup)
 
 # ezsetup
 
@@ -6,7 +6,7 @@
 
 <!-- TODO: Describe what is ezsetup. Better have a logo. -->
 
-## Installation
+## Dev Installation
 
 ### From Source
 
