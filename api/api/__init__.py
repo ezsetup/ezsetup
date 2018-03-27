@@ -19,7 +19,11 @@ default_permissions.add("Slices", "get")
 permissions_management = PermissionGroup("permissions")
 
 users_management = PermissionGroup("users")
+users_management.add("Users", "index")
 users_management.add("Users", "post")
+users_management.add("Users", "get")
+users_management.add("Users", "patch")
+users_management.add("Users", "delete")
 
 labs_management = PermissionGroup("labs")
 labs_management.add("Scenarios", "index")
@@ -40,6 +44,7 @@ scenarios_management.add("Scenarios", "post")
 scenarios_management.add("Scenarios", "get")
 scenarios_management.add("Scenarios", "index")
 scenarios_management.add("Scenarios", "patch")
+scenarios_management.add("Scenarios", "delete")
 scenarios_management.add("Flavors", "index")
 
 all_permission_groups = [permissions_management,

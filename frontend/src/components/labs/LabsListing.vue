@@ -21,7 +21,7 @@
         </td>
         <td>
           <router-link class="button is-small" :to="{ name: 'Lab', params: { id: lab.id } }">
-          {{ lab.status === 'inactive' ? 'Deploy' : 'Manage' }}
+            Manage
           </router-link>
         </td>
       </tr>

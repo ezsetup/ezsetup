@@ -27,7 +27,38 @@ class Users(FlaskView):
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
-        return "Get user"
+        user = User.fetchone(id=id)
+        userinfo = UserInfo.fetchone(user_id=id)
+        return jsonify({
+            'id': user.id,
+            'fullname': user.fullname,
+            'email': user.email,
+            'permission_groups': userinfo.permission_groups.value
+        })
+
+    def patch(self, id):
+        user = User.fetchone(id=id)
+        userinfo = UserInfo.fetchone(user_id=id)
+        user.email = request.get_json()['email']
+        user.fullname = request.get_json()['fullname']
+        password = request.get_json()['password']
+        if password is not None and len(password) > 0:
+            user.hash = argon2.hash(request.get_json()['password'])
+
+        userinfo.permission_groups = request.get_json()['permissionGroups']
+        try:
+            user.save()
+            userinfo.save()
+        except UniqueViolatedError:
+            # TODO: throw UniqueViolatedError in .save() method
+            return jsonify(errors=["Duplicated email address"]), 409
+
+        return jsonify(message='ok')
+
+    def delete(self, id):
+        user = User.fetchone(id=id)
+        user.delete()
+        return jsonify(message='ok')
 
     def post(self):
         """Create new user"""

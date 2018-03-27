@@ -265,3 +265,8 @@ class Scenarios(FlaskView):
                 ret.append(r)
 
             return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
+
+    def delete(self, id):
+        scenario = Scenario.fetchone(id=id)
+        scenario.delete()
+        return jsonify(message="ok")

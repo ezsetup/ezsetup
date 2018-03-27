@@ -30,7 +30,7 @@
             <span class="select">
               <select id="cloudProvider" name="cloudProvider" v-model="cloudProvider">
                 <option value="Openstack">Openstack</option>
-                <option value="AWS">AWS</option>
+                <!--<option value="AWS">AWS</option>-->
               </select>
             </span>
           </p>
@@ -95,8 +95,9 @@
 
         <div class="field">
           <p class="control">
-            <button v-if="state !== null" type="submit" class="button is-primary is-loading"></button>
+            <button v-if="state === 'Deploying'" type="submit" class="button is-primary is-loading"></button>
             <button v-else type="submit" v-on:click="onDeployBtn" class="button is-primary">{{buttonTitle}}</button>
+            <button v-on:click="onDestroyBtn" class="button is-primary is-danger">DESTROY</button>
           </p>
           <p v-if="error" class="help is-danger">{{error}}</p>
         </div>
@@ -114,11 +115,12 @@
 
 <script>
   import Multiselect from 'vue-multiselect'
-  import { POSTcloudconfig, DEPLOYlab, SEARCHuser } from '@/api'
+  import { POSTcloudconfig, DEPLOYlab, DESTROYlab, SEARCHuser } from '@/api'
 
   const State = Object.freeze({
     UPLOADING: 'Uploading cloud config',
-    DEPLOYING: 'Deploying'
+    DEPLOYING: 'Deploying',
+    DESTROYING: 'Destroying'
   })
 
   export default {
@@ -169,6 +171,13 @@
       onDeployBtn: function () {
         this.error = null
         this.postCloudConfig()
+      },
+      onDestroyBtn: function () {
+        this.error = null
+        this.state = State.DESTROYING
+        DESTROYlab(this.$route.params.id, json => {
+          this.$router.push('/labs')
+        })
       },
       postCloudConfig: function () {
         this.state = State.UPLOADING

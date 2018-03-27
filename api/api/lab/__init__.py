@@ -97,6 +97,11 @@ class Labs(FlaskView):
         lab.update(status='destroying')
         cloudconfig = CloudConfig.fetchone(lab_id=id)
 
+        if cloudconfig is None:
+            """No cloud config has been set. Just delete the lab instance"""
+            lab.delete()
+            return jsonify(message='ok')
+
         if cloudconfig.provider == 'Openstack':
             return _destroy_openstack(id, cloudconfig)
         
@@ -110,7 +115,7 @@ def _deploy_openstack(lab_id, cloudconfig, slices, scenario):
     for lab_slice in slices:
         if lab_slice.status == 'deploying':
             create_sec_group_job = queue.enqueue(openstackjobs.create_sec_group, cloudconfig, 
-                    lab_id, lab_slice, scenario, depends_on=first_job)
+                    lab_id, lab_slice, scenario, depends_on=first_job, result_ttl=5000)
 
             create_networks_job = queue.enqueue(openstackjobs.create_networks, cloudconfig,
                     lab_id, lab_slice, topo, depends_on=create_sec_group_job)

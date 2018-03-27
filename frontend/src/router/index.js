@@ -14,6 +14,7 @@ import ScenarioEditor from '@/components/scenarios/ScenarioEditor'
 
 import UsersManagement from '@/components/users/UsersManagement'
 import UserCreation from '@/components/users/UserCreation'
+import User from '@/components/users/User'
 
 import WorkSpace from '@/components/workspace/WorkSpace'
 
@@ -60,6 +61,14 @@ const router = new Router({
       path: '/users/new',
       name: 'NewUser',
       component: UserCreation,
+      meta: {
+        authRequired: true
+      }
+    },
+    {
+      path: '/users/:id',
+      name: 'User',
+      component: User,
       meta: {
         authRequired: true
       }

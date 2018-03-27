@@ -91,6 +91,7 @@ import {
   PATCHscenario,
   POSTscenario,
   GETscenario,
+  DELETEscenario,
   LISTInstanceConfigurations,
   LISTRouterConfigurations,
   LISTFlavors
@@ -141,7 +142,7 @@ export default {
       ],
       publishTools: [
         { name: 'save', icon: 'save', title: '', theme: 'is-success' },
-        { name: 'delete', icon: 'trash-alt', title: 'Delete Scenario', hidden: true, disabled: true },
+        { name: 'delete', icon: 'trash-alt', title: 'Delete Scenario' },
       ],
 
       selectionType: '',
@@ -268,6 +269,9 @@ export default {
           }
           break;
         case 'delete':
+          DELETEscenario(this.$route.params.id, json => {
+            this.$router.push('/scenarios')
+          })
           break;
       }
     },
