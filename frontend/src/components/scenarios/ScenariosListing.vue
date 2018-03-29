@@ -35,7 +35,7 @@ export default {
     }
   },
   created: function () {
-    LISTscenarios('?privateOnly=true', json => {
+    LISTscenarios(null, json => {
       this.scenarios = json
     })
   }
