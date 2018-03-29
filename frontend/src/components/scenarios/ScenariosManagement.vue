@@ -6,6 +6,7 @@
       </div>
       <div class="column is-narrow">
 		    <router-link :to="{ name: 'NewScenario' }" class="button is-success">Create Scenario</router-link>
+        <router-link :to="{ name: 'ImportScenario' }" class="button">Import Scenario</router-link>
       </div>
     </div>
     <div class="columns">

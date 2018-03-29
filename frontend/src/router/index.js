@@ -11,6 +11,7 @@ import Slice from '@/components/slices/Slice'
 
 import ScenariosManagement from '@/components/scenarios/ScenariosManagement'
 import ScenarioEditor from '@/components/scenarios/ScenarioEditor'
+import ImportScenario from '@/components/scenarios/ImportScenario'
 
 import UsersManagement from '@/components/users/UsersManagement'
 import UserCreation from '@/components/users/UserCreation'
@@ -84,6 +85,14 @@ const router = new Router({
       path: '/scenarios/new',
       name: 'NewScenario',
       component: ScenarioEditor,
+      meta: {
+        authRequired: true
+      }
+    },
+    {
+      path: '/scenarios/import',
+      name: 'ImportScenario',
+      component: ImportScenario,
       meta: {
         authRequired: true
       }

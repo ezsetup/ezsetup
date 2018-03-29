@@ -202,7 +202,7 @@ class Scenarios(FlaskView):
                            description=scenario.description, sgRules=scenario.sg_rules, topo=scenario.topo.value,
                            isPublic=scenario.is_public.value)
         else:
-            return jsonify(message="scenario not found"), 404
+            return jsonify(errors=["scenario not found"]), 404
 
     def post(self):
         name = request.get_json()['name']
@@ -220,13 +220,13 @@ class Scenarios(FlaskView):
         try:
             new_scenario.save()
         except UniqueViolatedError:
-            abort(make_response(jsonify(message="Duplicated scenario name"), 409))
+            abort(make_response(jsonify(errors=["Duplicated scenario name"]), 409))
         return jsonify(id=new_scenario.id)
 
     def patch(self, id):
         scenario = Scenario.fetchone(id=id)
         if scenario.owner_id != g.user['id']:
-            return jsonify(message="You are not the owner of this scenario"), 405
+            return jsonify(errors=["You are not the owner of this scenario"]), 405
 
         name = request.get_json()['name']
         description = request.get_json()['description']
