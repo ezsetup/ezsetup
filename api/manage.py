@@ -10,12 +10,12 @@ def create_root(email, password, fullname):
     new_root = User(fullname=fullname, email=email, hash=hash, is_root=True)
     try:
         new_root.save()
+        root = User.fetchone(email=email)
+        root_info = UserInfo(user_id=root.id, permission_groups=[
+                             group.name for group in all_permission_groups])
+        root_info.save()
     except UniqueViolatedError:
         print('Duplicated root user')
-    root = User.fetchone(email=email)
-    root_info = UserInfo(user_id=root.id, permission_groups=[
-                         group.name for group in all_permission_groups])
-    root_info.save()
 
 
 def delete_user(email):
