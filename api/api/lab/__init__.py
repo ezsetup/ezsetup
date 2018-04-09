@@ -131,7 +131,7 @@ def _deploy_openstack(lab_id, cloudconfig, slices, scenario):
                     lab_id, lab_slice, topo, depends_on=create_routers_job)
 
             set_slice_active_job = queue.enqueue(openstackjobs.set_slice_active,
-                    lab_id, lab_slice, depends_on=update_allowed_address_pairs_job)
+                    lab_id, lab_slice, depends_on=update_allowed_address_pairs_job, result_ttl=5000)
 
             last_jobs.append(set_slice_active_job)
             last_jobs_ids.append(set_slice_active_job.get_id())
@@ -157,7 +157,7 @@ def _destroy_openstack(lab_id, cloudconfig):
 
         # Destroy security group
         delete_sec_group_job = queue.enqueue(openstackjobs.delete_sec_group, cloudconfig,
-                lab_id, lab_slice, depends_on=delete_networks_job)
+                lab_id, lab_slice, depends_on=delete_networks_job, result_ttl=5000)
 
         last_jobs.append(delete_sec_group_job)
         last_jobs_ids.append(delete_sec_group_job.get_id())
