@@ -122,7 +122,8 @@ def _deploy_openstack(lab_id, cloudconfig, slices, scenario):
 
             create_sec_group_job_id = create_sec_group_job.get_id()
             create_instances_job = queue.enqueue(openstackjobs.create_instances, cloudconfig,
-                    lab_id, lab_slice, topo, create_sec_group_job_id, depends_on=create_networks_job)
+                    lab_id, lab_slice, topo, create_sec_group_job_id, 
+                    depends_on=create_networks_job, timeout='2h')
 
             create_routers_job = queue.enqueue(openstackjobs.create_routers, cloudconfig,
                     lab_id, lab_slice, topo, create_sec_group_job_id, depends_on=create_instances_job)
