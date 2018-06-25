@@ -18,29 +18,41 @@ class Reports(FlaskView):
                 'id': report.id,
                 'student': report.student,
                 'labname': report.labname,
+                'assessmentid': report.assessmentid,
                 'answers': report.answers,
-                'points': report.points,
                 'starttime': report.starttime,
-                'endtime': report.endtime
+                'endtime': report.endtime,
+                'attemptNum': report.attempt_num
             })
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
-        return "Get report"
+        rep = Report.fetchone(id=id)
+        return jsonify({
+            'id': rep.id,
+            'student': rep.student,
+            'labname': rep.labname,
+            'assessmentid': rep.assessmentid,
+            'answers': rep.answers,
+            'starttime': rep.starttime,
+            'endtime': rep.endtime,
+            'attemptNum': rep.attempt_num
+        })
 
     def post(self):
         """Create new report"""
-        user = request.get_json()['student']
-        lab = request.get_json()['labname']
+        student = request.get_json()['student']
+        labname = request.get_json()['labname']
+        assessmentid = request.get_json()['assessmentid']
         answers = request.get_json()['answers']
-        points = request.get_json()['points']
         starttime = request.get_json()['starttime']
         endtime = request.get_json()['endtime']
-        new_report = Report(student=student, labname=labname, answers=answers,
-                                points=points, starttime=starttime, endtime=endtime)
+        attempt_num = request.get_json()['attemptNum']
+        new_report = Report(student=student, labname=labname, assessmentid=assessmentid, answers=answers,
+                                starttime=starttime, endtime=endtime, attempt_num=attempt_num)
         try:
             new_report.save()
         except UniqueViolatedError:
-            return jsonify(error="Duplicated question title"), 409
+            return jsonify(error=""), 409
         return jsonify(message="ok")
 

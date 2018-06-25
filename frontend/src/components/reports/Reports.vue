@@ -4,9 +4,6 @@
       <div class="column">
         <h1 class="title">Reports</h1>
       </div>
-      <div class="column is-narrow">
-        <router-link :to="{ name: 'TakeAssessment' }" class="button is-success">DEBUG: Take Assessment</router-link>
-      </div>
     </div>
     <div class="columns">
       <div class="column">

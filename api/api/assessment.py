@@ -24,7 +24,14 @@ class Assessments(FlaskView):
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
-        return "Get assessment"
+        assessment = Assessment.fetchone(id=id)
+        return jsonify({
+            'id': assessment.id,
+            'atitle': assessment.atitle,
+            'adescription': assessment.adescription,
+            'questions': assessment.questions,
+            'scores': assessment.scores
+        })
 
     def post(self):
         """Create new assessment"""

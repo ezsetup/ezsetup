@@ -32,7 +32,10 @@ create table labs (id SERIAL PRIMARY KEY,
                   description TEXT,
                   status DEPLOY_STATUS,
                   owner_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
-                  scenario_id INTEGER REFERENCES scenarios (id) ON DELETE SET NULL);
+                  scenario_id INTEGER REFERENCES scenarios (id) ON DELETE SET NULL,
+                  preassessment_id INTEGER REFERENCES assessments (id),
+                  postassessment_id INTEGER REFERENCES assessments (id),
+                  allowed_attempts INTEGER[]);
 
 create table cloudconfigs (id SERIAL PRIMARY KEY,
                      detail JSONB,
@@ -117,7 +120,16 @@ create table questions (id SERIAL PRIMARY KEY,
 create table reports (id SERIAL PRIMARY KEY,
                       student TEXT,
                       labname TEXT,
+                      assessmentid TEXT,
                       answers TEXT[],
-                      points TEXT[],
-                      starttime TEXT,
-                      endtime TEXT)
+                      starttime BIGINT,
+                      endtime BIGINT,
+                      pre_post INTEGER,
+                      attempt_num INTEGER);
+
+create table grades (id SERIAL PRIMARY KEY,
+                     student TEXT,
+                     reportid INTEGER,
+                     points TEXT[],
+                     feedback TEXT[],
+                     needsgrading TEXT)

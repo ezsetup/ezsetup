@@ -20,9 +20,7 @@
 import AssessmentListing from '@/components/assessment/AssessmentListing.vue'
 export default {
   name: 'Assessment',
-  components: {
-    AssessmentListing
-  },
+  components: {AssessmentListing},
   data: function () {
     return {
 	  title: '',

@@ -20,6 +20,9 @@ class Lab(Model):
     owner_id = IntegerField()
     scenario_id = IntegerField()
     status = EnumField()
+    preassessment_id = IntegerField()
+    postassessment_id = IntegerField()
+    allowed_attempts = ArrayField()
 
     class Meta:
         table = 'labs'
@@ -137,10 +140,22 @@ class Question(Model):
 class Report(Model):
     student = TextField()
     labname = TextField()
-    answers = TextField()
-    points = TextField()
-    starttime = TextField()
-    endtime = TextField()
+    assessmentid = TextField()
+    answers = ArrayField()
+    starttime = IntegerField()
+    endtime = IntegerField()
+    pre_post = IntegerField()
+    attempt_num = IntegerField()
 
     class Meta:
         table = 'reports'
+
+class Grade(Model):
+    student = TextField()
+    reportid = IntegerField()
+    points = ArrayField()
+    feedback = ArrayField()
+    needsgrading = TextField()
+
+    class Meta:
+        table = 'grades'

@@ -60,6 +60,10 @@ function GETUserSelf (jsonOkCallback) {
     })
 }
 
+function GETUser (id, jsonOkCallback) {
+  _GET('/api/users/' + id + '/', jsonOkCallback)
+}
+
 function POSTUser (email, password, fullname, permissionGroups, jsonOkCallback) {
   console.log('API client - POST /api/users/ - inputs:', email, password, fullname, permissionGroups)
   let options = {
@@ -190,14 +194,17 @@ function GETlab (labId, jsonOkCallback) {
     })
 }
 
-function POSTlab (name, description, scenarioId, jsonOkCallback) {
+function POSTlab (name, description, scenarioId, preassessmentId, postassessmentId, allowedAttempts, jsonOkCallback) {
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
       name: name,
       description: description,
-      scenarioId: scenarioId
+      scenarioId: scenarioId,
+      preassessmentId: preassessmentId,
+      postassessmentId: postassessmentId,
+      allowedAttempts: allowedAttempts
     })
   }
   fetch(API_SERVER + '/api/labs/', options)
@@ -334,8 +341,8 @@ function LISTAssessments (jsonOkCallback) {
   _GET('/api/assessments/', jsonOkCallback)
 }
 
-function GETAssessment (atitle, jsonOkCallback) {
-  _GET('/api/assessments/' + atitle + '/', jsonOkCallback)
+function GETAssessment (id, jsonOkCallback) {
+  _GET('/api/assessments/' + id + '/', jsonOkCallback)
 }
 
 function POSTQuestion (qkind, qtitle, qtext, answers, correct, feedback, jsonOkCallback) {
@@ -366,18 +373,23 @@ function LISTQuestions (jsonOkCallback) {
   _GET('/api/questions/', jsonOkCallback)
 }
 
-function POSTReports (student, labname, answers, points, starttime, endtime, jsonOkCallback) {
-  console.log('API client - POST /api/reports/ - inputs:', student, labname, answers, points, starttime, endtime)
+function GETQuestion (id, jsonOkCallback) {
+  _GET('/api/questions/' + id + '/', jsonOkCallback)
+}
+
+function POSTReports (student, labname, assessmentid, answers, starttime, endtime, attemptNum, jsonOkCallback) {
+  console.log('API client - POST /api/reports/ - inputs:', student, labname, assessmentid, answers, starttime, endtime)
   let options = {
     headers: authHeaders(),
     method: 'POST',
     body: JSON.stringify({
       'student': student,
       'labname': labname,
+      'assessmentid': assessmentid,
       'answers': answers,
-      'points': points,
       'starttime': starttime,
-      'endtime': endtime
+      'endtime': endtime,
+      'attemptNum': attemptNum
     })
   }
   console.log('API client - POST /api/reports/ - body:', options.body)
@@ -394,11 +406,69 @@ function LISTReports (jsonOkCallback) {
   _GET('/api/reports/', jsonOkCallback)
 }
 
+function GETReport (id, jsonOkCallback) {
+  _GET('/api/reports/' + id + '/', jsonOkCallback)
+}
+
+function POSTGrade (student, reportid, points, feedback, needsgrading, jsonOkCallback) {
+  console.log('API client - POST /api/grades/ - inputs:', student, reportid, points, feedback, needsgrading)
+  let options = {
+    headers: authHeaders(),
+    method: 'POST',
+    body: JSON.stringify({
+      'student': student,
+      'reportid': reportid,
+      'points': points,
+      'feedback': feedback,
+      'needsgrading': needsgrading
+    })
+  }
+  console.log('API client - POST /api/grades/ - body:', options.body)
+
+  fetch(API_SERVER + '/api/grades/', options)
+    .then(response => {
+      if (response.ok) {
+        response.json().then(jsonOkCallback)
+      }
+    })
+}
+
+function PATCHGrade (id, student, reportid, points, feedback, needsgrading, onSuccess, onFailed) {
+  let options = {
+    headers: authHeaders(),
+    method: 'PATCH',
+    body: JSON.stringify({
+      student: student,
+      reportid: reportid,
+      points: points,
+      feedback: feedback,
+      needsgrading: needsgrading
+    })
+  }
+
+  fetch(API_SERVER + '/api/grades/' + id + '/', options).then(response => {
+    if (response.ok) {
+      response.json().then(onSuccess)
+    } else {
+      response.json().then(onFailed)
+    }
+  })
+}
+
+function LISTGrades (jsonOkCallback) {
+  _GET('/api/grades/', jsonOkCallback)
+}
+
+function GETGrade (id, jsonOkCallback) {
+  _GET('/api/grades/' + id + '/', jsonOkCallback)
+}
+
 export {
   login,
   GETUserSelf,
   LISTusers,
   POSTUser,
+  GETUser,
   SEARCHuser,
 
   GETscenario,
@@ -425,8 +495,17 @@ export {
   POSTAssessment,
   LISTAssessments,
   GETAssessment,
+
   POSTQuestion,
   LISTQuestions,
+  GETQuestion,
+
   POSTReports,
-  LISTReports
+  LISTReports,
+  GETReport,
+
+  POSTGrade,
+  GETGrade,
+  LISTGrades,
+  PATCHGrade
 }

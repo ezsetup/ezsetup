@@ -15,8 +15,13 @@ class Labs(FlaskView):
         name = request.get_json()['name']
         description = request.get_json()['description']
         scenario_id = request.get_json()['scenarioId']
+        preassessment_id = request.get_json()['preassessmentId']
+        postassessment_id = request.get_json()['postassessmentId']
+        allowed_attempts = request.get_json()['allowedAttempts']
         new_lab = Lab.insert(name=name, description=description, scenario_id=scenario_id,
-                      owner_id=g.user['id'], status='inactive')
+                             preassessment_id=preassessment_id, postassessment_id=postassessment_id,
+                             allowed_attempts=allowed_attempts,
+                             owner_id=g.user['id'], status='inactive')
         return jsonify(id=new_lab.id)
 
     def index(self):

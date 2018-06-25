@@ -13,6 +13,19 @@ default_permissions = PermissionGroup("default")
 default_permissions.add("Users", "get_self")
 default_permissions.add("Slices", "index")
 default_permissions.add("Slices", "get")
+default_permissions.add("Users", "search")
+
+# default permissions for assessment module
+default_permissions.add("Assessments", "index")
+default_permissions.add("Assessments", "get")
+default_permissions.add("Questions", "index")
+default_permissions.add("Questions", "get")
+default_permissions.add("Reports", "post")
+default_permissions.add("Reports", "get")
+default_permissions.add("Reports", "index")
+default_permissions.add("Grades", "index")
+default_permissions.add("Grades", "get")
+default_permissions.add("Grades", "post")
 
 # define other permission groups
 # NOTE: code smell!!! Only admin needs this permission.
@@ -28,7 +41,6 @@ labs_management.add("Labs", "index")
 labs_management.add("Labs", "get")
 labs_management.add("Labs", "deploy")
 labs_management.add("Labs", "destroy")
-labs_management.add("Users", "search")
 labs_management.add("Users", "index")
 labs_management.add("Cloudconfigs", "post")
 labs_management.add("Slices", "get")
@@ -37,14 +49,8 @@ labs_management.add("Flavors", "index")
 
 # Additional lab management permissions for Assessment module
 labs_management.add("Assessments", "post")
-labs_management.add("Assessments", "get")
-labs_management.add("Assessments", "index")
 labs_management.add("Questions", "post")
-labs_management.add("Questions", "get")
-labs_management.add("Questions", "index")
-labs_management.add("Reports", "post")
-labs_management.add("Reports", "get")
-labs_management.add("Reports", "index")
+labs_management.add("Grades", "patch")
 
 scenarios_management = PermissionGroup("scenarios")
 scenarios_management.add("Scenarios", "post")

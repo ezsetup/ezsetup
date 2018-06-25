@@ -21,6 +21,9 @@ import Assessment from '@/components/assessment/Assessment'
 import newAssessment from '@/components/assessment/newAssessment'
 import Reports from '@/components/reports/Reports'
 import TakeAssessment from '@/components/assessment/takeAssessment'
+import ManageReports from '@/components/reports/ManageReports'
+import Grades from '@/components/grades/grades'
+import GradeDetails from '@/components/grades/GradeDetails'
 
 import store from '@/store'
 // import Cookies from 'js-cookie'
@@ -140,13 +143,38 @@ const router = new Router({
           }
         },
         {
-          path: 'assessment',
+          path: 'reports/:id',
+          component: ManageReports,
+          name: 'ManageReports',
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: 'assessment/:id',
           component: TakeAssessment,
           name: 'TakeAssessment',
           meta: {
             authRequired: true
           }
+        },
+        {
+          path: 'grades',
+          component: Grades,
+          name: 'Grades',
+          meta: {
+            authRequired: true
+          }
+        },
+        {
+          path: 'grades/:id',
+          component: GradeDetails,
+          name: 'GradeDetails',
+          meta: {
+            authRequired: true
+          }
         }
+
       ]
     },
     {

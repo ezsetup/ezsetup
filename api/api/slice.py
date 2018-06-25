@@ -108,6 +108,9 @@ class Slices(FlaskView):
             lab = Lab.fetchone(id=sl.lab_id)
             ret.append({
                 'id': sl.id,
-                'labName': lab.name
+                'labName': lab.name,
+                'preassessment': lab.preassessment_id,
+                'postassessment': lab.postassessment_id,
+                'allowedAttempts': lab.allowed_attempts
             })
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))

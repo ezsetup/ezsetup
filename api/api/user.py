@@ -27,7 +27,11 @@ class Users(FlaskView):
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
-        return "Get user"
+        userSelf = User.fetchone(id=id)
+        return jsonify ({
+            'fullname': userSelf.fullname,
+            'email': userSelf.email
+        })
 
     def post(self):
         """Create new user"""
@@ -52,7 +56,10 @@ class Users(FlaskView):
     @route('/self')
     def get_self(self):
         get_user_info()
-        return jsonify(permissionGroups=g.user['permission_groups'])
+        return jsonify(
+            permissionGroups=g.user['permission_groups'],
+            email=g.user['email'],
+            id=g.user['id'])
 
     @route('/search', methods=['POST'])
     def search(self):

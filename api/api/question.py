@@ -26,7 +26,15 @@ class Questions(FlaskView):
         return jsonify(sorted(ret, key=lambda i: i['id'], reverse=True))
 
     def get(self, id):
-        return "Get question"
+        quest = Question.fetchone(id=id)
+        return jsonify({
+        'qkind': quest.qkind,
+        'qtitle': quest.qtitle,
+        'qtext': quest.qtext,
+        'answers': quest.answers,
+        'correct': quest.correct,
+        'feedback': quest.feedback
+        })
 
     def post(self):
         """Create new question"""

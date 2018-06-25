@@ -14,6 +14,9 @@
         <li v-if="!this.$store.state.auth.is_root" :class="{'is-active': this.$route.path.includes('/workspace')}">
           <router-link to="/workspace">Workspace</router-link>
         </li>
+        <li v-if="!this.$store.state.auth.is_root" :class="{'is-active': this.$route.path.includes('/grades')}">
+          <router-link to="/grades">My Grades</router-link>
+        </li>
         <li v-if="permissionGroups.includes('labs')" :class="{'is-active': this.$route.path.includes('/assessment')}">
           <router-link to="/assessment">Assessment</router-link>
         </li>
