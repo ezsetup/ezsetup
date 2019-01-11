@@ -59,7 +59,7 @@ write_files:
           permissions: '0755'
 
 runcmd:
-        - git clone https://github.com/novnc/noVNC /var/lib/noVNC
+        - git clone https://github.com/novnc/noVNC -b v1.0.0 /var/lib/noVNC
         # move vnc files back to the home folder and reset their ownership
         - mv /tmp/.vnc /home/ubuntu/
         - chown -R ubuntu:ubuntu /home/ubuntu/.vnc
