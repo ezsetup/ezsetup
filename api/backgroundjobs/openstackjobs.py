@@ -21,7 +21,7 @@ def create_sec_group(cloudconfig: CloudConfig, lab_id, lab_slice: Slice, scenari
         new_cloud_attrs = lab_slice.cloud_attrs
         new_cloud_attrs['sec_group_id'] = sec_group_id
         lab_slice.update(cloud_attrs=new_cloud_attrs.value)
-        for rule in scenario.sg_rules:
+        for rule in scenario.sg_rules.value:
             _add_security_group_rule(openstack, sec_group_id, rule)
         return sec_group_id
     except Exception as ex:
